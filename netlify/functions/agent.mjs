@@ -7,7 +7,7 @@
 const NOTION_VERSION = "2022-06-28";
 const PROJETS_DB = process.env.PROJETS_DB_ID || "9642cf381ff243829efada20f671758c";
 const TACHES_DB  = process.env.TACHES_DB_ID  || "f430d874e56845fc850450088740b2ee";
-const MODEL      = process.env.OPENROUTER_MODEL || "google/gemma-3-27b-it:free";
+const MODEL      = process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
