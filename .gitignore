@@ -1,0 +1,11 @@
+# Secrets : jamais dans le repo, ils vivent dans Netlify
+.env
+.env.*
+!.env.example
+
+# Dependances
+node_modules/
+
+# Divers
+.DS_Store
+.netlify/

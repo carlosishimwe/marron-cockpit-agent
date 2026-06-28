@@ -1,0 +1,10 @@
+[build]
+  # rien a builder, juste la fonction
+  functions = "netlify/functions"
+  publish = "."
+
+[functions]
+  node_bundler = "esbuild"
+
+# La fonction expose son propre chemin via export const config = { path: "/api/agent" }.
+# Elle est donc accessible sur https://<ton-site>.netlify.app/api/agent
