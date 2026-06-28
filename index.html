@@ -321,6 +321,7 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
       <a data-nav="accueil" class="on"><span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></span>Accueil</a>
       <a data-nav="roadmap"><span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2"/><circle cx="3.5" cy="12" r="1.2"/><circle cx="3.5" cy="18" r="1.2"/></svg></span>Roadmap</a>
       <a data-nav="projets"><span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h5l2 2h9v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/></svg></span>Projets</a>
+      <a data-nav="taches"><span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m4 6 1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg></span>Tâches</a>
       <a data-nav="equipe"><span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.7-3.3 3-5 5.5-5s4.8 1.7 5.5 5"/><path d="M16 6.2a3 3 0 0 1 0 5.6M18.5 20c-.4-2-1.3-3.5-2.6-4.4"/></svg></span>Équipe</a>
       <a data-nav="chantiers"><span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></svg></span>Chantiers</a>
     </nav>
@@ -357,10 +358,10 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
         <div class="phead"><h1>État de la maison</h1><div class="sub">Vue consolidée · 5 entités · 14 chantiers actifs</div></div>
 
         <div class="kpis">
-          <div class="kpi reveal" style="animation-delay:.04s"><div class="lab">Projets actifs</div><div class="val" id="kpiProjets">0</div></div>
-          <div class="kpi reveal" style="animation-delay:.1s"><div class="lab">Tâches à faire</div><div class="val" id="kpiTaches">0</div></div>
-          <div class="kpi alert reveal" style="animation-delay:.16s"><div class="lab">En retard</div><div class="val" id="kpiRetard">0<small>tâches</small></div></div>
-          <div class="kpi reveal" style="animation-delay:.22s"><div class="lab">Livrés</div><div class="val" id="kpiLivres">0<small>ce mois</small></div></div>
+          <div class="kpi reveal" data-go="projets" style="animation-delay:.04s"><div class="lab">Projets actifs</div><div class="val" id="kpiProjets">0</div></div>
+          <div class="kpi reveal" data-go="taches" style="animation-delay:.1s"><div class="lab">Tâches à faire</div><div class="val" id="kpiTaches">0</div></div>
+          <div class="kpi alert reveal" data-go="taches" style="animation-delay:.16s"><div class="lab">En retard</div><div class="val" id="kpiRetard">0<small>tâches</small></div></div>
+          <div class="kpi reveal" data-go="projets" style="animation-delay:.22s"><div class="lab">Livrés</div><div class="val" id="kpiLivres">0<small>ce mois</small></div></div>
         </div>
 
         <div class="agg">
@@ -514,6 +515,49 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
       </section>
 
       <!-- CHANTIERS -->
+      <!-- TÂCHES -->
+      <style>
+      .respfilter{display:flex;gap:7px;flex-wrap:wrap;}
+      .rchip{font-size:12px;color:var(--ink-soft);font-weight:500;border:1px solid var(--line-2);border-radius:100px;padding:6px 13px;background:var(--card);cursor:pointer;font-family:var(--sans);transition:all .18s;}
+      .rchip.on{background:var(--brick);border-color:var(--brick);color:#fff;font-weight:600;}
+      .rchip:not(.on):hover{border-color:var(--muted);}
+      .tgroup{margin-bottom:18px;}
+      .tgroup-h{display:flex;align-items:center;gap:9px;margin:0 0 8px;padding:0 2px;}
+      .tgroup-h .nm{font-weight:700;font-size:14px;color:var(--ink);}
+      .tgroup-h .ct{font-size:11px;color:var(--muted);font-weight:500;}
+      .tcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);}
+      .trow{display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid var(--line);}
+      .trow:last-child{border-bottom:none;}
+      .trow .sdot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+      .trow .tnm{flex:1;min-width:0;font-size:13.5px;color:var(--ink);}
+      .trow .tmeta{display:flex;align-items:center;gap:12px;flex:0 0 auto;}
+      .trow .tresp{font-size:11px;color:var(--ink-soft);white-space:nowrap;}
+      .trow .tst{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600;white-space:nowrap;}
+      .trow .tech{font-size:11px;color:var(--muted);font-feature-settings:"tnum";white-space:nowrap;}
+      .trow.late .tech{color:var(--brick);font-weight:700;}
+      .tempty{padding:34px 20px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6;}
+      .sdot.st-afaire{background:var(--muted);}
+      .sdot.st-encours{background:var(--marron);}
+      .sdot.st-bloque{background:var(--brick);}
+      .sdot.st-fait{background:var(--molimo);}
+      </style>
+      <section class="page" id="page-taches">
+        <div class="phead"><h1>Tâches</h1><div class="sub">Tes tâches Notion, en direct</div></div>
+        <div class="toolbar">
+          <div class="count" id="tCount">Chargement…</div>
+          <div class="respfilter" id="respFilter">
+            <button class="rchip on" data-resp="Tous">Tous</button>
+            <button class="rchip" data-resp="Carlos">Carlos</button>
+            <button class="rchip" data-resp="Sendo">Sendo</button>
+            <button class="rchip" data-resp="Mélissa">Mélissa</button>
+            <button class="rchip" data-resp="Thibô">Thibô</button>
+            <button class="rchip" data-resp="Hortense">Hortense</button>
+            <button class="rchip" data-resp="Tara">Tara</button>
+          </div>
+        </div>
+        <div id="tachesBody"><div class="tempty">Chargement de tes tâches…</div></div>
+      </section>
+
       <section class="page" id="page-chantiers">
         <div class="phead"><h1>Chantiers</h1><div class="sub">Les workstreams de la maison, par entité</div></div>
 
@@ -566,6 +610,7 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
   <a data-nav="accueil" class="on"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Accueil</a>
   <a data-nav="roadmap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2"/><circle cx="3.5" cy="12" r="1.2"/><circle cx="3.5" cy="18" r="1.2"/></svg>Roadmap</a>
   <a data-nav="projets"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h5l2 2h9v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"/></svg>Projets</a>
+  <a data-nav="taches"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m4 6 1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>Tâches</a>
   <a data-nav="equipe"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.7-3.3 3-5 5.5-5s4.8 1.7 5.5 5"/><path d="M16 6.2a3 3 0 0 1 0 5.6M18.5 20c-.4-2-1.3-3.5-2.6-4.4"/></svg>Équipe</a>
   <a data-nav="chantiers"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></svg>Chantiers</a>
 </nav>
@@ -648,12 +693,13 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
 (function(){
   var $=function(s){return document.querySelector(s);};
   var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s));};
-  var titles={accueil:"État de la maison",roadmap:"Roadmap",projets:"Projets",equipe:"Équipe",chantiers:"Chantiers"};
+  var titles={accueil:"État de la maison",roadmap:"Roadmap",projets:"Projets",taches:"Tâches",equipe:"Équipe",chantiers:"Chantiers"};
 
   function showPage(id){
     $$(".page").forEach(function(p){p.classList.toggle("on", p.id==="page-"+id);});
     $$("[data-nav]").forEach(function(a){a.classList.toggle("on", a.getAttribute("data-nav")===id);});
     var bt=$("#barTitle"); if(bt) bt.textContent=titles[id]||"";
+    if(id==="taches") loadTaches();
     window.scrollTo(0,0);
   }
   $$("[data-nav]").forEach(function(a){a.addEventListener("click",function(e){e.preventDefault();showPage(a.getAttribute("data-nav"));});});
@@ -791,6 +837,65 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
   document.getElementById("chatInput").addEventListener("keydown", function(e){
     if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendMsg(); }
   });
+
+  // Navigation par clic : KPI et chantiers mènent au détail
+  $$(".kpi").forEach(function(k){ k.style.cursor="pointer"; k.addEventListener("click", function(){ showPage(k.getAttribute("data-go")||"projets"); }); });
+  $$(".chrow").forEach(function(r){ r.addEventListener("click", function(){ showPage("chantiers"); }); });
+  $$(".ccard").forEach(function(c){ c.addEventListener("click", function(){ showPage("projets"); }); });
+
+  // ===== PAGE TÂCHES (données Notion live via /api/agent) =====
+  var TACHES_DATA = null, respFilter = "Tous", tachesLoaded = false;
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function statusClass(s){ s=(s||"").toLowerCase();
+    if(s.indexOf("fait")>=0) return "st-fait";
+    if(s.indexOf("bloq")>=0) return "st-bloque";
+    if(s.indexOf("cours")>=0) return "st-encours";
+    return "st-afaire"; }
+  function isLate(t){ if(!t.echeance) return false;
+    if((t.statut||"").toLowerCase().indexOf("fait")>=0) return false;
+    return t.echeance < new Date().toISOString().slice(0,10); }
+  function renderTaches(){
+    var body=document.getElementById("tachesBody");
+    if(!TACHES_DATA){ return; }
+    var list=TACHES_DATA.filter(function(t){ return respFilter==="Tous" || t.resp===respFilter; });
+    document.getElementById("tCount").innerHTML="<b>"+list.length+"</b> tâches";
+    if(!list.length){ body.innerHTML='<div class="tempty">Aucune tâche pour ce filtre.</div>'; return; }
+    var groups={}, order=[];
+    list.forEach(function(t){ var k=t.projet||"Sans projet"; if(!groups[k]){groups[k]=[];order.push(k);} groups[k].push(t); });
+    var html="";
+    order.forEach(function(proj){
+      var rows=groups[proj].map(function(t){
+        return '<div class="trow '+(isLate(t)?"late":"")+'">'
+          +'<span class="sdot '+statusClass(t.statut)+'"></span>'
+          +'<span class="tnm">'+esc(t.tache||"Sans titre")+'</span>'
+          +'<span class="tmeta">'
+          +(t.resp?'<span class="tresp">'+esc(t.resp)+'</span>':'')
+          +(t.statut?'<span class="tst">'+esc(t.statut)+'</span>':'')
+          +(t.echeance?'<span class="tech">'+esc(t.echeance)+'</span>':'')
+          +'</span></div>';
+      }).join("");
+      html+='<div class="tgroup"><div class="tgroup-h"><span class="nm">'+esc(proj)+'</span><span class="ct">'+groups[proj].length+'</span></div><div class="tcard">'+rows+'</div></div>';
+    });
+    body.innerHTML=html;
+  }
+  async function loadTaches(){
+    if(tachesLoaded){ renderTaches(); return; }
+    var body=document.getElementById("tachesBody");
+    body.innerHTML='<div class="tempty">Chargement de tes tâches Notion…</div>';
+    try{
+      var r=await fetch(AGENT_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"data"})});
+      var data=await r.json();
+      if(data.error){ body.innerHTML='<div class="tempty">'+esc(data.error)+'</div>'; return; }
+      TACHES_DATA=data.taches||[]; tachesLoaded=true; renderTaches();
+    }catch(e){
+      body.innerHTML='<div class="tempty">Impossible de charger les tâches en local. Ouvre l\'app depuis ton URL Netlify pour voir tes vraies tâches Notion.</div>';
+    }
+  }
+  $$(".rchip").forEach(function(c){ c.addEventListener("click",function(){
+    respFilter=c.getAttribute("data-resp");
+    $$(".rchip").forEach(function(x){ x.classList.toggle("on", x===c); });
+    renderTaches();
+  }); });
 
   document.documentElement.setAttribute("data-theme","light");
   showPage("accueil"); applyFilter();

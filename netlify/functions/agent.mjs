@@ -7,7 +7,7 @@
 const NOTION_VERSION = "2022-06-28";
 const PROJETS_DB = process.env.PROJETS_DB_ID || "9642cf381ff243829efada20f671758c";
 const TACHES_DB  = process.env.TACHES_DB_ID  || "f430d874e56845fc850450088740b2ee";
-const MODEL      = process.env.OPENROUTER_MODEL || "deepseek/deepseek-chat";
+const MODEL      = process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -44,10 +44,10 @@ const sel = (p) => p?.select?.name || "";
 const dat = (p) => p?.date?.start || "";
 const rel = (p) => (p?.relation || []).map((r) => r.id);
 
-// --- construit un contexte texte compact pour le LLM ---
-function buildContext(projects, tasks) {
+// --- extrait projets + taches en tableaux JSON propres ---
+function extractData(projects, tasks) {
   const nameById = {};
-  const P = projects.map((pg) => {
+  const projets = projects.map((pg) => {
     const pr = pg.properties;
     const o = {
       id: pg.id,
@@ -64,7 +64,7 @@ function buildContext(projects, tasks) {
     return o;
   });
 
-  const T = tasks.map((tg) => {
+  const taches = tasks.map((tg) => {
     const pr = tg.properties;
     const projet = rel(pr["Projet"]).map((id) => nameById[id]).filter(Boolean).join(", ");
     return {
@@ -77,15 +77,20 @@ function buildContext(projects, tasks) {
     };
   });
 
+  return { projets, taches };
+}
+
+// --- construit un contexte texte compact pour le LLM ---
+function contextFromData({ projets, taches }) {
   const today = new Date().toISOString().slice(0, 10);
-  const lines = [`Date du jour : ${today}.`, ``, `PROJETS (${P.length}) :`];
-  P.forEach((p) =>
+  const lines = [`Date du jour : ${today}.`, ``, `PROJETS (${projets.length}) :`];
+  projets.forEach((p) =>
     lines.push(
       `- ${p.nom} | entité ${p.entite} | statut ${p.statut} | garant ${p.garant} | priorité ${p.priorite} | pôle ${p.pole} | échéance ${p.echeance || "non définie"}${p.notes ? ` | note: ${p.notes}` : ""}`
     )
   );
-  lines.push(``, `TÂCHES (${T.length}) :`);
-  T.forEach((t) =>
+  lines.push(``, `TÂCHES (${taches.length}) :`);
+  taches.forEach((t) =>
     lines.push(
       `- ${t.tache} | projet ${t.projet || "—"} | statut ${t.statut} | responsable ${t.resp} | priorité ${t.priorite} | échéance ${t.echeance || "non définie"}`
     )
@@ -110,46 +115,39 @@ function json(obj, status = 200) {
 
 export default async (req) => {
   if (req.method === "OPTIONS") return new Response("", { status: 204, headers: CORS });
-
-  // GET = diagnostic (ne revele jamais les secrets)
-  if (req.method === "GET") {
-    return json({
-      ok: true,
-      env: {
-        NOTION_TOKEN: process.env.NOTION_TOKEN ? "defini (longueur " + process.env.NOTION_TOKEN.length + ")" : "MANQUANT",
-        OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY ? "defini (longueur " + process.env.OPENROUTER_API_KEY.length + ")" : "MANQUANT",
-        PROJETS_DB_ID: PROJETS_DB,
-        TACHES_DB_ID: TACHES_DB,
-        MODEL: MODEL,
-      }
-    });
-  }
-
   if (req.method !== "POST") return json({ error: "POST uniquement" }, 405);
 
   try {
-    const { question, history } = await req.json();
-    if (!question) return json({ error: "question manquante" }, 400);
+    const body = await req.json().catch(() => ({}));
+    const mode = body.mode || "chat";
 
     const NOTION = process.env.NOTION_TOKEN;
-    const OPENROUTER = process.env.OPENROUTER_API_KEY;
-    if (!NOTION || !OPENROUTER) return json({ error: "NOTION_TOKEN ou OPENROUTER_API_KEY manquant cote serveur" }, 500);
+    if (!NOTION) return json({ error: "NOTION_TOKEN manquant cote serveur" }, 500);
 
-    // 1. lire Notion
+    // 1. lire Notion (toujours)
     const [projects, tasks] = await Promise.all([
       notionQuery(PROJETS_DB, NOTION),
       notionQuery(TACHES_DB, NOTION),
     ]);
-    const context = buildContext(projects, tasks);
+    const data = extractData(projects, tasks);
 
-    // 2. composer les messages
+    // 2a. mode lecture brute : l'app remplit ses pages avec ca
+    if (mode === "data") return json(data);
+
+    // 2b. mode chat : on demande au LLM
+    const { question, history } = body;
+    if (!question) return json({ error: "question manquante" }, 400);
+
+    const OPENROUTER = process.env.OPENROUTER_API_KEY;
+    if (!OPENROUTER) return json({ error: "OPENROUTER_API_KEY manquant cote serveur" }, 500);
+
+    const context = contextFromData(data);
     const messages = [
       { role: "system", content: `${SYSTEM}\n\n=== DONNEES ===\n${context}` },
       ...(Array.isArray(history) ? history.slice(-6) : []),
       { role: "user", content: question },
     ];
 
-    // 3. appeler OpenRouter
     const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -166,7 +164,7 @@ export default async (req) => {
     const answer = j.choices?.[0]?.message?.content?.trim() || "Pas de reponse.";
     return json({ answer });
   } catch (e) {
-    return json({ error: String((e && e.message) || e), stack: (e && e.stack) ? String(e.stack).split("\n").slice(0, 3).join(" | ") : undefined }, 500);
+    return json({ error: String((e && e.message) || e) }, 500);
   }
 };
 
