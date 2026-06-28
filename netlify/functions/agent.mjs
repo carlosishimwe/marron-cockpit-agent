@@ -110,6 +110,21 @@ function json(obj, status = 200) {
 
 export default async (req) => {
   if (req.method === "OPTIONS") return new Response("", { status: 204, headers: CORS });
+
+  // GET = diagnostic (ne revele jamais les secrets)
+  if (req.method === "GET") {
+    return json({
+      ok: true,
+      env: {
+        NOTION_TOKEN: process.env.NOTION_TOKEN ? "defini (longueur " + process.env.NOTION_TOKEN.length + ")" : "MANQUANT",
+        OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY ? "defini (longueur " + process.env.OPENROUTER_API_KEY.length + ")" : "MANQUANT",
+        PROJETS_DB_ID: PROJETS_DB,
+        TACHES_DB_ID: TACHES_DB,
+        MODEL: MODEL,
+      }
+    });
+  }
+
   if (req.method !== "POST") return json({ error: "POST uniquement" }, 405);
 
   try {
@@ -151,7 +166,7 @@ export default async (req) => {
     const answer = j.choices?.[0]?.message?.content?.trim() || "Pas de reponse.";
     return json({ answer });
   } catch (e) {
-    return json({ error: String((e && e.message) || e) }, 500);
+    return json({ error: String((e && e.message) || e), stack: (e && e.stack) ? String(e.stack).split("\n").slice(0, 3).join(" | ") : undefined }, 500);
   }
 };
 
