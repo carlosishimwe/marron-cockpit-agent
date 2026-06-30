@@ -576,20 +576,24 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
       .vutoggle button:not(.on):hover{background:var(--card-2);color:var(--ink);}
 
       /* gantt tâches : même axe que la roadmap */
-      .tgantt{border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow:hidden;box-shadow:var(--shadow);}
-      .tgantt .gmonths{border-bottom:1px solid var(--line);}
-      .tgantt .tgrow{display:grid;grid-template-columns:250px 1fr;border-bottom:1px solid var(--line);align-items:center;min-height:36px;}
+      .tgantt{border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow-x:auto;overflow-y:visible;box-shadow:var(--shadow);}
+      .tgantt .gmonths{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:4;background:var(--card);}
+      .tgantt .tgrow{display:grid;grid-template-columns:280px 1fr;border-bottom:1px solid var(--line);align-items:stretch;min-height:36px;}
       .tgantt .tgrow:last-child{border-bottom:none;}
-      .tgantt .tgrow .lbl{padding:7px 12px;min-width:0;display:flex;align-items:center;gap:8px;}
+      .tgantt .tgrow .lbl{padding:6px 12px;min-width:0;display:flex;align-items:center;gap:8px;position:sticky;left:0;z-index:2;background:var(--card);border-right:1px solid var(--line);}
+      .tgantt .tgrow:hover .lbl{background:var(--card-2);}
       .tgantt .tgrow .lbl .tdot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;}
       .tgantt .tgrow .lbl .tdot.afaire{background:var(--muted);}
       .tgantt .tgrow .lbl .tdot.encours{background:var(--marron);}
       .tgantt .tgrow .lbl .tdot.bloque{background:var(--brick);}
       .tgantt .tgrow .lbl .tdot.fait{background:var(--molimo);}
       .tgantt .tgrow .lbl .tnom{font-size:12.5px;color:var(--ink);font-weight:500;white-space:normal;line-height:1.3;flex:1;min-width:0;}
-      .tgantt .tgrow .lbl .tproj{font-size:9.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;}
+      .tgantt .tgrow .lbl .tproj{font-size:9.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;}
       .tgantt .tgrow .lbl .tresp{font-size:10px;color:var(--ink-soft);font-weight:500;margin-left:auto;}
-      .tgantt .ttrack{position:relative;height:32px;}
+      .tgantt .tgrow .lbl .tent{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;}
+      .tgantt .tgrow .lbl .tech{font-size:10px;color:var(--muted);font-feature-settings:"tnum";white-space:nowrap;margin-left:auto;}
+      .tgantt .tgrow.late .lbl .tech{color:var(--brick);font-weight:700;}
+      .tgantt .ttrack{position:relative;height:32px;min-width:400px;}
       .tgantt .ttrack .grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(7,1fr);}
       .tgantt .ttrack .grid i{border-left:1px solid var(--line);}
       .tgantt .tdiamond{position:absolute;top:50%;width:9px;height:9px;background:var(--brick);transform:translate(-50%,-50%) rotate(45deg);border:1px solid var(--card);border-radius:1px;z-index:2;}
@@ -597,8 +601,10 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
       .tgantt .tdiamond.bloq{background:var(--brick);opacity:.5;}
       .tgantt .tdiamond.noech{display:none;}
       .tgantt .ttoday{position:absolute;top:0;bottom:0;width:1.5px;background:var(--brick);z-index:3;}
-      .tgantt .tsection{padding:8px 12px 4px;font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--card-2);border-bottom:1px solid var(--line);}
+      .tgantt .tsection{padding:8px 12px 4px;font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--card-2);border-bottom:1px solid var(--line);position:sticky;left:0;z-index:1;}
       html[data-theme="dark"] .tgantt .tsection{background:rgba(236,226,208,.03);}
+      html[data-theme="dark"] .tgantt .tgrow .lbl{background:var(--card);}
+      html[data-theme="dark"] .tgantt .tgrow:hover .lbl{background:var(--card-2);}
       .ttooltip{font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5;display:flex;gap:14px;flex-wrap:wrap;}
       </style>
       <section class="page" id="page-taches">
@@ -953,6 +959,7 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     var todayPct=pos(todayISO());
     var grid='<div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>';
     var todayLine='<div class="ttoday" style="left:'+todayPct.toFixed(0)+'%"></div>';
+    var m=projEntityMap();
 
     /* tri par échéance (sans date en dernier) */
     var sorted=list.slice().sort(function(a,b){
@@ -969,7 +976,8 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     var rows="", hasEch=false;
 
     order.forEach(function(proj){
-      rows+='<div class="tsection">'+esc(proj)+' · '+groups[proj].length+' tâche'+(groups[proj].length>1?'s':'')+'</div>';
+      var ent=m[proj]||"";
+      rows+='<div class="tsection">'+esc(proj)+' · '+groups[proj].length+' tâche'+(groups[proj].length>1?'s':'')+(ent?' <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--ink-soft)">— '+esc(ent)+'</span>':'')+'</div>';
       groups[proj].forEach(function(t){
         var st=(t.statut||"").toLowerCase();
         var dotClass=st.indexOf("fait")>=0?"fait":(st.indexOf("bloq")>=0?"bloque":(st.indexOf("cours")>=0?"encours":"afaire"));
@@ -980,7 +988,8 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
           var bloq=st.indexOf("bloq")>=0;
           diamond='<div class="tdiamond'+(done?" done":"")+(bloq?" bloq":"")+'" style="left:'+p.toFixed(0)+'%" title="'+esc(t.tache||"")+' · '+frDate(t.echeance)+'"></div>';
         }
-        rows+='<div class="tgrow"><div class="lbl"><span class="tdot '+dotClass+'"></span><span class="tnom">'+esc(t.tache||"Sans titre")+'</span>'+(t.resp?'<span class="tresp">'+esc(t.resp)+'</span>':'')+'</div><div class="ttrack">'+grid+todayLine+diamond+'</div></div>';
+        var late=isLate(t);
+        rows+='<div class="tgrow'+(late?" late":"")+'"><div class="lbl"><span class="tdot '+dotClass+'"></span><span class="tnom">'+esc(t.tache||"Sans titre")+'</span>'+(t.echeance?'<span class="tech">'+esc(frDate(t.echeance))+'</span>':'')+(t.resp?'<span class="tresp">'+esc(t.resp)+'</span>':'')+(ent?'<span class="tent">'+entBadge(ent)+'</span>':'')+'</div><div class="ttrack">'+grid+todayLine+diamond+'</div></div>';
       });
     });
 
