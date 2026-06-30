@@ -323,6 +323,23 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
 .drawer .drow .v{color:var(--ink);text-align:right;font-weight:500;}
 .drawer .dnotes{font-size:13.5px;color:var(--ink-soft);line-height:1.6;margin-top:14px;}
 .drawer .dbtn{display:inline-flex;align-items:center;gap:8px;margin-top:20px;border:1px solid var(--line-2);border-radius:100px;padding:10px 18px;color:var(--brick);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;cursor:pointer;background:var(--card);}
+.drawer .dbtn:hover{background:var(--brick-tint);border-color:var(--brick);}
+.drawer .dsub{margin-top:20px;}
+.drawer .dsub .mcap{margin-bottom:10px;display:block;}
+.drawer .dchild{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:background .15s,border-color .15s;border:1px solid transparent;}
+.drawer .dchild:hover{background:var(--card-2);border-color:var(--line);}
+.drawer .dchild .dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;}
+.drawer .dchild .dot.afaire{background:var(--muted);}
+.drawer .dchild .dot.encours{background:var(--marron);}
+.drawer .dchild .dot.bloque{background:var(--brick);}
+.drawer .dchild .dot.fait{background:var(--molimo);}
+.drawer .dchild .ct{flex:1;min-width:0;font-size:13px;color:var(--ink);}
+.drawer .dchild .mt{font-size:10px;color:var(--muted);margin-left:auto;white-space:nowrap;}
+.drawer .dback{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--brick);font-weight:600;cursor:pointer;border:none;background:none;padding:6px 0;margin-bottom:10px;font-family:var(--sans);}
+.drawer .dback:hover{opacity:.7;}
+.drawer .dheader{gap:6px;}
+.drawer .dheader .dk{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--brick);font-weight:700;margin-bottom:8px;}
+.drawer h2{font-weight:700;font-size:23px;line-height:1.15;padding-right:40px;letter-spacing:-.01em;}
 
 .reveal{opacity:0;transform:translateY(10px);animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards;}
 @keyframes rise{to{opacity:1;transform:none;}}
@@ -553,7 +570,8 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
       .tgroup-h .nm{font-weight:700;font-size:14px;color:var(--ink);}
       .tgroup-h .ct{font-size:11px;color:var(--muted);font-weight:500;}
       .tcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);}
-      .trow{display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid var(--line);}
+      .trow{display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .14s;}
+      .trow:hover{background:var(--card-2);}
       .trow:last-child{border-bottom:none;}
       .trow .sdot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
       .trow .tnm{flex:1;min-width:0;font-size:13.5px;color:var(--ink);}
@@ -577,7 +595,9 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
 
       /* gantt tâches : même axe que la roadmap */
       .tgantt{border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow-x:auto;overflow-y:visible;box-shadow:var(--shadow);}
-      .tgantt .gmonths{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:4;background:var(--card);}
+      .tgantt .gmonths{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;background:var(--card);}
+      .tgantt .gmonths .sp{padding:12px 14px;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;position:sticky;left:0;z-index:6;background:var(--card);}
+      .tgantt .gmonths .mm{min-width:420px;}
       .tgantt .tgrow{display:grid;grid-template-columns:280px 1fr;border-bottom:1px solid var(--line);align-items:stretch;min-height:36px;}
       .tgantt .tgrow:last-child{border-bottom:none;}
       .tgantt .tgrow .lbl{padding:6px 12px;min-width:0;display:flex;align-items:center;gap:8px;position:sticky;left:0;z-index:2;background:var(--card);border-right:1px solid var(--line);}
@@ -745,18 +765,17 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
 <div class="ovl" id="ovl"></div>
 <aside class="drawer" id="drawer">
   <button class="x" id="drawerX"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  <div class="dk" id="dEnt">Projet</div>
-  <h2 id="dName">—</h2>
-  <div style="margin-top:16px">
-    <div class="drow"><span class="k">Chantier</span><span class="v" id="dChantier"></span></div>
-    <div class="drow"><span class="k">Garant</span><span class="v" id="dGarant"></span></div>
-    <div class="drow"><span class="k">Statut</span><span class="v" id="dStatut"></span></div>
-    <div class="drow"><span class="k">Type</span><span class="v" id="dType"></span></div>
-    <div class="drow"><span class="k">Échéance</span><span class="v" id="dEch"></span></div>
-    <div class="drow"><span class="k">Priorité</span><span class="v" id="dPrio"></span></div>
+  <div class="dheader">
+    <div class="dk" id="dTypeBadge"></div>
+    <h2 id="dName">—</h2>
   </div>
+  <div style="margin-top:16px" id="dFields"></div>
   <div class="dnotes" id="dNotes"></div>
-  <a class="dbtn">Voir dans Notion <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
+  <div class="dsub" id="dChildren" style="display:none">
+    <span class="mcap" id="dChildrenLabel">Enfants</span>
+    <div id="dChildrenList"></div>
+  </div>
+  <a class="dbtn" id="dNotionLink" target="_blank" rel="noopener" style="display:none">Ouvrir dans Notion ↗</a>
 </aside>
 
 <script>
@@ -820,20 +839,95 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
   $$(".chip[data-chip]").forEach(function(c){c.addEventListener("click",function(){ent=c.getAttribute("data-chip");applyFilter();});});
 
   var ovl=$("#ovl"), drawer=$("#drawer");
-  function openProjet(tr){
-    $("#dName").textContent=tr.getAttribute("data-projet")||"—";
-    $("#dEnt").textContent=tr.getAttribute("data-ent")||"Projet";
-    $("#dChantier").textContent=tr.getAttribute("data-chantier")||"";
-    $("#dGarant").textContent=tr.getAttribute("data-garant")||"";
-    $("#dStatut").textContent=tr.getAttribute("data-statut")||"";
-    $("#dType").textContent=tr.getAttribute("data-type")||"";
-    $("#dEch").textContent=tr.getAttribute("data-echeance")||"";
-    $("#dPrio").textContent=tr.getAttribute("data-prio")||"";
-    $("#dNotes").textContent=tr.getAttribute("data-notes")||"";
+  var drawerStack=[]; /* pile pour navigation in-app */
+
+  function openDrawer(entity){
+    drawerStack=[entity]; renderDrawer(entity);
     ovl.classList.add("on"); drawer.classList.add("on");
   }
-  function closeDrawer(){ovl.classList.remove("on");drawer.classList.remove("on");}
-  $$("tr[data-projet]").forEach(function(tr){tr.addEventListener("click",function(){openProjet(tr);});});
+  function pushDrawer(entity){
+    drawerStack.push(entity); renderDrawer(entity);
+  }
+  function popDrawer(){
+    if(drawerStack.length<=1){ closeDrawer(); return; }
+    drawerStack.pop(); renderDrawer(drawerStack[drawerStack.length-1]);
+  }
+  function closeDrawer(){ ovl.classList.remove("on");drawer.classList.remove("on");drawerStack=[]; }
+
+  function renderDrawer(e){
+    var type=e._type||"projet";
+    $("#dTypeBadge").textContent=type==="projet"?"Projet":(type==="tache"?"Tâche":"Chantier");
+    $("#dName").textContent=e.nom||e.tache||"—";
+
+    /* champs */
+    var fields=[];
+    if(type==="projet"){
+      fields.push({k:"Entité",v:e.entite||""});
+      fields.push({k:"Chantier",v:(e.chantier||[]).join(", ")||"—"});
+      fields.push({k:"Garant",v:e.garant||""});
+      fields.push({k:"Statut",v:e.statut||""});
+      fields.push({k:"Type",v:e.type||""});
+      fields.push({k:"Échéance",v:e.echeance?frDate(e.echeance)+" "+String(e.echeance).slice(0,4):(e.type==="RUN"?"récurrent":"—")});
+      fields.push({k:"Priorité",v:e.priorite||""});
+    } else if(type==="tache"){
+      fields.push({k:"Projet",v:e.projet||""});
+      fields.push({k:"Statut",v:e.statut||""});
+      fields.push({k:"Responsable",v:e.resp||""});
+      fields.push({k:"Échéance",v:e.echeance?frDate(e.echeance)+" "+String(e.echeance).slice(0,4):"—"});
+    } else if(type==="chantier"){
+      fields.push({k:"Entité",v:e.entite||""});
+      fields.push({k:"Pilote",v:e.pilote||""});
+      fields.push({k:"Description",v:e.description||"—"});
+    }
+    $("#dFields").innerHTML=fields.map(function(f){
+      return '<div class="drow"><span class="k">'+esc(f.k)+'</span><span class="v">'+esc(f.v)+'</span></div>';
+    }).join("");
+
+    /* notes */
+    $("#dNotes").textContent=e.notes||"";
+
+    /* bouton Notion */
+    var nb=$("#dNotionLink");
+    if(e.url){ nb.href=e.url; nb.style.display="inline-flex"; }
+    else { nb.style.display="none"; }
+
+    /* enfants */
+    var children=[], childLabel="";
+    if(type==="projet" && LIVE){
+      children=(LIVE.taches||[]).filter(function(t){ return t.projet && t.projet.split(/,\s*/).indexOf(e.nom)>=0; });
+      childLabel="Tâches";
+    } else if(type==="chantier" && LIVE){
+      children=(LIVE.projets||[]).filter(function(p){ return (p.chantier||[]).indexOf(e.nom)>=0; });
+      childLabel="Projets";
+    }
+    var childDiv=$("#dChildren"), childList=$("#dChildrenList"), childLab=$("#dChildrenLabel");
+    if(children.length){
+      childDiv.style.display="block"; childLab.textContent=childLabel+" · "+children.length;
+      childList.innerHTML=children.map(function(c){
+        var isT=!!c.tache;
+        var st=(c.statut||"").toLowerCase();
+        var dc=st.indexOf("fait")>=0?"fait":(st.indexOf("bloq")>=0?"bloque":(st.indexOf("cours")>=0?"encours":"afaire"));
+        return '<div class="dchild" data-entity="'+esc(JSON.stringify(isT?Object.assign({},c,{_type:"tache"}):Object.assign({},c,{_type:"projet"})))+'"><span class="dot '+dc+'"></span><span class="ct">'+esc(isT?(c.tache||"Sans titre"):(c.nom||"Sans nom"))+'</span>'+(c.echeance?'<span class="mt">'+esc(frDate(c.echeance))+'</span>':'')+(c.resp?'<span class="mt">'+esc(c.resp)+'</span>':'')+'</div>';
+      }).join("");
+      /* rebind clicks */
+      childList.querySelectorAll(".dchild").forEach(function(d){ d.onclick=function(){
+        var ent=JSON.parse(d.getAttribute("data-entity")); pushDrawer(ent);
+      };});
+    } else { childDiv.style.display="none"; }
+
+    /* bouton back si pile > 1 */
+    var existingBack=drawer.querySelector(".dback");
+    if(existingBack) existingBack.remove();
+    if(drawerStack.length>1){
+      var back=document.createElement("button");
+      back.className="dback";
+      back.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg> Retour';
+      back.onclick=popDrawer;
+      drawer.querySelector(".dheader").after(back);
+    }
+  }
+
+  /* bind drawer close */
   $("#drawerX").addEventListener("click",closeDrawer);
   ovl.addEventListener("click",closeDrawer);
   document.addEventListener("keydown",function(e){if(e.key==="Escape")closeDrawer();});
@@ -934,12 +1028,12 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     document.getElementById("tCount").innerHTML="<b>"+list.length+"</b> tâches";
     if(!list.length){ body.innerHTML='<div class="tempty">Aucune tâche pour ce filtre.</div>'; return; }
     if(tachesView==="roadmap"){ renderTachesRoadmap(list,body); return; }
-    var groups={}, order=[];
+      var groups={}, order=[];
     list.forEach(function(t){ var k=t.projet||"Sans projet"; if(!groups[k]){groups[k]=[];order.push(k);} groups[k].push(t); });
     var html="";
     order.forEach(function(proj){
       var rows=groups[proj].map(function(t){
-        return '<div class="trow '+(isLate(t)?"late":"")+'">'
+        return '<div class="trow '+(isLate(t)?"late":"")+'" data-tache="'+esc(t.tache||"")+'">'
           +'<span class="sdot '+statusClass(t.statut)+'"></span>'
           +'<span class="tnm">'+esc(t.tache||"Sans titre")+'</span>'
           +'<span class="tmeta">'
@@ -951,6 +1045,15 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
       html+='<div class="tgroup"><div class="tgroup-h"><span class="nm">'+esc(proj)+'</span><span class="ct">'+groups[proj].length+'</span></div><div class="tcard">'+rows+'</div></div>';
     });
     body.innerHTML=html;
+    body.querySelectorAll(".trow").forEach(function(row){
+      var tn=row.getAttribute("data-tache");
+      if(!tn) return;
+      row.style.cursor="pointer";
+      row.addEventListener("click",function(){
+        var t=(TACHES_DATA||[]).filter(function(x){ return x.tache===tn; })[0];
+        if(t) openDrawer(Object.assign({},t,{_type:"tache"}));
+      });
+    });
   }
 
   function renderTachesRoadmap(list, body){
@@ -989,12 +1092,22 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
           diamond='<div class="tdiamond'+(done?" done":"")+(bloq?" bloq":"")+'" style="left:'+p.toFixed(0)+'%" title="'+esc(t.tache||"")+' · '+frDate(t.echeance)+'"></div>';
         }
         var late=isLate(t);
-        rows+='<div class="tgrow'+(late?" late":"")+'"><div class="lbl"><span class="tdot '+dotClass+'"></span><span class="tnom">'+esc(t.tache||"Sans titre")+'</span>'+(t.echeance?'<span class="tech">'+esc(frDate(t.echeance))+'</span>':'')+(t.resp?'<span class="tresp">'+esc(t.resp)+'</span>':'')+(ent?'<span class="tent">'+entBadge(ent)+'</span>':'')+'</div><div class="ttrack">'+grid+todayLine+diamond+'</div></div>';
+        rows+='<div class="tgrow'+(late?" late":"")+'" data-tache="'+esc(t.tache||"")+'"><div class="lbl"><span class="tdot '+dotClass+'"></span><span class="tnom">'+esc(t.tache||"Sans titre")+'</span>'+(t.echeance?'<span class="tech">'+esc(frDate(t.echeance))+'</span>':'')+(t.resp?'<span class="tresp">'+esc(t.resp)+'</span>':'')+(ent?'<span class="tent">'+entBadge(ent)+'</span>':'')+'</div><div class="ttrack">'+grid+todayLine+diamond+'</div></div>';
       });
     });
 
     var tooltip=hasEch?'<div class="ttooltip"><span>◆ brique = à faire</span><span>◆ vert = faite</span><span>◆ brique clair = bloquée</span><span>│ rouge = Aujourd\'hui</span></div>':'<div class="ttooltip">Aucune tâche avec échéance.</div>';
     body.innerHTML='<div class="tgantt">'+head+rows+'</div>'+tooltip;
+    /* rendre cliquables */
+    body.querySelectorAll(".tgrow").forEach(function(row){
+      var tn=row.getAttribute("data-tache");
+      if(!tn) return;
+      row.style.cursor="pointer";
+      row.addEventListener("click",function(){
+        var t=(TACHES_DATA||[]).filter(function(x){ return x.tache===tn; })[0];
+        if(t) openDrawer(Object.assign({},t,{_type:"tache"}));
+      });
+    });
   }
   async function loadTaches(){
     if(tachesLoaded){ renderTaches(); return; }
@@ -1103,14 +1216,18 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
 
   function chrowHTML(c){
     var s=chantierStats(c), pct=s.total? Math.round(s.done/s.total*100):0;
-    return '<div class="chrow" data-ent="'+esc(c.entite)+'"><div class="l1"><span class="badge" style="background:'+entColor(c.entite)+'">'+entBadge(c.entite)+'</span><span class="nm">'+esc(c.nom)+'</span>'+avatarMini(c.pilote)+'</div><div class="l2"><div class="track"><i style="width:'+pct+'%;background:'+entColor(c.entite)+'"></i></div><span class="frac">'+s.done+' / '+s.total+'</span></div></div>';
+    return '<div class="chrow" data-ent="'+esc(c.entite)+'" data-chantier="'+esc(c.nom)+'"><div class="l1"><span class="badge" style="background:'+entColor(c.entite)+'">'+entBadge(c.entite)+'</span><span class="nm">'+esc(c.nom)+'</span>'+avatarMini(c.pilote)+'</div><div class="l2"><div class="track"><i style="width:'+pct+'%;background:'+entColor(c.entite)+'"></i></div><span class="frac">'+s.done+' / '+s.total+'</span></div></div>';
   }
   function renderChantiersHome(){
     var host=document.querySelector("#page-accueil .chlist"); if(!host) return;
     var list=LIVE.chantiers.filter(function(c){ return inScope(c.entite); });
     if(!list.length){ host.innerHTML='<div class="tempty" style="padding:20px">Aucun chantier pour ce filtre.</div>'; return; }
     host.innerHTML=list.slice(0,8).map(chrowHTML).join("");
-    host.querySelectorAll(".chrow").forEach(function(r){ r.onclick=function(){ showPage("chantiers"); }; });
+    host.querySelectorAll(".chrow").forEach(function(r){ r.onclick=function(){
+      var cn=r.getAttribute("data-chantier");
+      var c=(LIVE.chantiers||[]).filter(function(x){ return x.nom===cn; })[0];
+      if(c) openDrawer(Object.assign({},c,{_type:"chantier"}));
+    }; });
   }
 
   function renderSurveiller(){
@@ -1128,8 +1245,13 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
       var d=Math.round((new Date(t.echeance)-new Date(today))/86400000);
       var lab=d<0?("J+"+(-d)):(d===0?"Auj.":("J-"+d));
       var hot=d<=2?" hot":"";
-      return '<div class="al'+hot+'"><span class="d"></span><span class="t">'+esc(t.tache||"Sans titre")+'</span><span class="j">'+lab+'</span></div>';
+      return '<div class="al'+hot+'" style="cursor:pointer" data-tache="'+esc(t.tache||"")+'"><span class="d"></span><span class="t">'+esc(t.tache||"Sans titre")+'</span><span class="j">'+lab+'</span></div>';
     }).join("");
+    host.querySelectorAll(".al").forEach(function(al){ al.onclick=function(){
+      var tn=al.getAttribute("data-tache");
+      var t=(LIVE.taches||[]).filter(function(x){ return x.tache===tn; })[0];
+      if(t) openDrawer(Object.assign({},t,{_type:"tache"}));
+    }; });
   }
 
   function renderJalon(){
@@ -1203,7 +1325,10 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
         +'<td class="ech">'+esc(ed)+'</td>'
         +'<td><span class="prio '+prioClass(p.priorite)+'">'+esc(p.priorite||"—")+'</span></td></tr>';
     }).join("");
-    body.querySelectorAll("tr[data-projet]").forEach(function(tr){ tr.onclick=function(){ openProjet(tr); }; });
+    body.querySelectorAll("tr[data-projet]").forEach(function(tr){ tr.onclick=function(){
+      var p=LIVE.projets.filter(function(x){ return x.nom===tr.getAttribute("data-projet"); })[0];
+      if(p) openDrawer(Object.assign({},p,{_type:"projet"}));
+    }; });
   }
 
   function renderRoadmap(){
@@ -1259,6 +1384,17 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     });
     if(!any){ html+='<div class="tempty" style="padding:24px">Aucun projet pour ce filtre.</div>'; }
     host.innerHTML=html;
+    /* rendre cliquables les lignes projet */
+    host.querySelectorAll(".grow").forEach(function(row){
+      var pn=row.getAttribute("data-projet");
+      if(!pn) return;
+      row.style.cursor="pointer";
+      row.addEventListener("click",function(e){
+        if(e.target.closest(".gchev")) return;
+        var p=(LIVE.projets||[]).filter(function(x){ return x.nom===pn; })[0];
+        if(p) openDrawer(Object.assign({},p,{_type:"projet"}));
+      });
+    });
   }
 
   function renderChantiersIndex(){
@@ -1271,12 +1407,17 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
       any=true;
       var cards=list.map(function(c){
         var s=chantierStats(c), pct=s.total? Math.round(s.done/s.total*100):0;
-        return '<div class="ccard"><div class="t">'+esc(c.nom)+avatarMini(c.pilote,"margin-left:auto")+'</div><div class="ds">'+esc(c.description||"—")+'</div><div class="ft"><div class="track"><i style="width:'+pct+'%;background:'+entColor(e)+'"></i></div><span class="frac">'+s.done+' / '+s.total+'</span></div></div>';
+        return '<div class="ccard" data-chantier="'+esc(c.nom)+'"><div class="t">'+esc(c.nom)+avatarMini(c.pilote,"margin-left:auto")+'</div><div class="ds">'+esc(c.description||"—")+'</div><div class="ft"><div class="track"><i style="width:'+pct+'%;background:'+entColor(e)+'"></i></div><span class="frac">'+s.done+' / '+s.total+'</span></div></div>';
       }).join("");
       html+='<div class="csection" data-ent="'+esc(e)+'"><div class="ch-h"><span class="badge" style="background:'+entColor(e)+'">'+entBadge(e)+'</span><h3>'+esc(e)+'</h3><span class="ct">'+list.length+' chantier'+(list.length>1?"s":"")+'</span></div><div class="cgrid">'+cards+'</div></div>';
     });
     if(!any){ html+='<div class="tempty" style="padding:24px">Aucun chantier pour ce filtre.</div>'; }
     page.innerHTML=html;
+    page.querySelectorAll(".ccard").forEach(function(cd){ cd.onclick=function(){
+      var cn=cd.getAttribute("data-chantier");
+      var c=(LIVE.chantiers||[]).filter(function(x){ return x.nom===cn; })[0];
+      if(c) openDrawer(Object.assign({},c,{_type:"chantier"}));
+    }; });
   }
 
   function renderChargeChart(){
