@@ -578,19 +578,28 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
       /* gantt tâches : même axe que la roadmap */
       .tgantt{border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow:hidden;box-shadow:var(--shadow);}
       .tgantt .gmonths{border-bottom:1px solid var(--line);}
-      .tgantt .tgrow{display:grid;grid-template-columns:190px 1fr;border-bottom:1px solid var(--line);align-items:center;min-height:36px;}
+      .tgantt .tgrow{display:grid;grid-template-columns:250px 1fr;border-bottom:1px solid var(--line);align-items:center;min-height:36px;}
       .tgantt .tgrow:last-child{border-bottom:none;}
-      .tgantt .tgrow .lbl{padding:7px 12px;min-width:0;display:flex;align-items:center;gap:7px;}
-      .tgantt .tgrow .lbl .pname{font-size:12px;color:var(--ink);font-weight:600;white-space:normal;line-height:1.3;}
-      .tgantt .tgrow .lbl .pct{font-size:10px;color:var(--muted);margin-left:auto;font-weight:500;}
+      .tgantt .tgrow .lbl{padding:7px 12px;min-width:0;display:flex;align-items:center;gap:8px;}
+      .tgantt .tgrow .lbl .tdot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;}
+      .tgantt .tgrow .lbl .tdot.afaire{background:var(--muted);}
+      .tgantt .tgrow .lbl .tdot.encours{background:var(--marron);}
+      .tgantt .tgrow .lbl .tdot.bloque{background:var(--brick);}
+      .tgantt .tgrow .lbl .tdot.fait{background:var(--molimo);}
+      .tgantt .tgrow .lbl .tnom{font-size:12.5px;color:var(--ink);font-weight:500;white-space:normal;line-height:1.3;flex:1;min-width:0;}
+      .tgantt .tgrow .lbl .tproj{font-size:9.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;}
+      .tgantt .tgrow .lbl .tresp{font-size:10px;color:var(--ink-soft);font-weight:500;margin-left:auto;}
       .tgantt .ttrack{position:relative;height:32px;}
       .tgantt .ttrack .grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(7,1fr);}
       .tgantt .ttrack .grid i{border-left:1px solid var(--line);}
-      .tgantt .tdiamond{position:absolute;top:50%;width:8px;height:8px;background:var(--brick);transform:translate(-50%,-50%) rotate(45deg);border:1px solid var(--card);border-radius:1px;z-index:2;}
+      .tgantt .tdiamond{position:absolute;top:50%;width:9px;height:9px;background:var(--brick);transform:translate(-50%,-50%) rotate(45deg);border:1px solid var(--card);border-radius:1px;z-index:2;}
       .tgantt .tdiamond.done{background:var(--molimo);}
-      .tgantt .tdiamond.bloq{background:var(--brick);opacity:.6;}
+      .tgantt .tdiamond.bloq{background:var(--brick);opacity:.5;}
+      .tgantt .tdiamond.noech{display:none;}
       .tgantt .ttoday{position:absolute;top:0;bottom:0;width:1.5px;background:var(--brick);z-index:3;}
-      .ttooltip{font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5;}
+      .tgantt .tsection{padding:8px 12px 4px;font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--card-2);border-bottom:1px solid var(--line);}
+      html[data-theme="dark"] .tgantt .tsection{background:rgba(236,226,208,.03);}
+      .ttooltip{font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5;display:flex;gap:14px;flex-wrap:wrap;}
       </style>
       <section class="page" id="page-taches">
         <div class="phead"><h1>Tâches</h1><div class="sub">Tes tâches Notion, en direct</div></div>
@@ -942,30 +951,40 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     var START=new Date("2026-06-01"), END=new Date("2026-12-31"); var span=END-START;
     function pos(d){ var t=(new Date(d)-START)/span*100; return Math.max(0,Math.min(100,t)); }
     var todayPct=pos(todayISO());
-    var m=projEntityMap();
-
-    /* groupe par projet */
-    var groups={}, order=[];
-    list.forEach(function(t){ var k=t.projet||"Sans projet"; if(!groups[k]){groups[k]=[];order.push(k);} groups[k].push(t); });
-
-    var head='<div class="gmonths"><div class="sp">Projet</div><div class="mm"><span>Jun</span><span>Jul</span><span>Aoû</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Déc</span></div></div>';
     var grid='<div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>';
-    var rows="", hasEch=false;
-    order.forEach(function(proj){
-      var tasks=groups[proj];
-      var withEch=tasks.filter(function(t){ return t.echeance; });
-      var withoutEch=tasks.length-withEch.length;
-      var diamond="";
-      withEch.forEach(function(t){ hasEch=true;
-        var p=pos(t.echeance);
-        var done=(t.statut||"").toLowerCase().indexOf("fait")>=0;
-        var bloq=(t.statut||"").toLowerCase().indexOf("bloq")>=0;
-        diamond+='<div class="tdiamond'+(done?" done":"")+(bloq?" bloq":"")+'" style="left:'+p.toFixed(0)+'%" title="'+esc(t.tache||"")+' · '+frDate(t.echeance)+'"></div>';
-      });
-      var tip=withoutEch>0?' <span class="pct">+'+withoutEch+' sans éch.</span>':'';
-      rows+='<div class="tgrow"><div class="lbl"><span class="pname">'+esc(proj)+'</span>'+tip+'</div><div class="ttrack">'+grid+'<div class="ttoday" style="left:'+todayPct.toFixed(0)+'%"></div>'+diamond+'</div></div>';
+    var todayLine='<div class="ttoday" style="left:'+todayPct.toFixed(0)+'%"></div>';
+
+    /* tri par échéance (sans date en dernier) */
+    var sorted=list.slice().sort(function(a,b){
+      if(!a.echeance && !b.echeance) return 0;
+      if(!a.echeance) return 1; if(!b.echeance) return -1;
+      return a.echeance<b.echeance?-1:(a.echeance>b.echeance?1:0);
     });
-    var tooltip=hasEch?'<div class="ttooltip">◆=june tâche · vert=faite · brique clair=bloquée · ligne rouge=Aujourd\'hui</div>':'';
+
+    /* groupe par projet pour les sections */
+    var groups={}, order=[];
+    sorted.forEach(function(t){ var k=t.projet||"Sans projet"; if(!groups[k]){groups[k]=[];order.push(k);} groups[k].push(t); });
+
+    var head='<div class="gmonths"><div class="sp">Tâche</div><div class="mm"><span>Jun</span><span>Jul</span><span>Aoû</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Déc</span></div></div>';
+    var rows="", hasEch=false;
+
+    order.forEach(function(proj){
+      rows+='<div class="tsection">'+esc(proj)+' · '+groups[proj].length+' tâche'+(groups[proj].length>1?'s':'')+'</div>';
+      groups[proj].forEach(function(t){
+        var st=(t.statut||"").toLowerCase();
+        var dotClass=st.indexOf("fait")>=0?"fait":(st.indexOf("bloq")>=0?"bloque":(st.indexOf("cours")>=0?"encours":"afaire"));
+        var diamond="";
+        if(t.echeance){ hasEch=true;
+          var p=pos(t.echeance);
+          var done=st.indexOf("fait")>=0;
+          var bloq=st.indexOf("bloq")>=0;
+          diamond='<div class="tdiamond'+(done?" done":"")+(bloq?" bloq":"")+'" style="left:'+p.toFixed(0)+'%" title="'+esc(t.tache||"")+' · '+frDate(t.echeance)+'"></div>';
+        }
+        rows+='<div class="tgrow"><div class="lbl"><span class="tdot '+dotClass+'"></span><span class="tnom">'+esc(t.tache||"Sans titre")+'</span>'+(t.resp?'<span class="tresp">'+esc(t.resp)+'</span>':'')+'</div><div class="ttrack">'+grid+todayLine+diamond+'</div></div>';
+      });
+    });
+
+    var tooltip=hasEch?'<div class="ttooltip"><span>◆ brique = à faire</span><span>◆ vert = faite</span><span>◆ brique clair = bloquée</span><span>│ rouge = Aujourd\'hui</span></div>':'<div class="ttooltip">Aucune tâche avec échéance.</div>';
     body.innerHTML='<div class="tgantt">'+head+rows+'</div>'+tooltip;
   }
   async function loadTaches(){
