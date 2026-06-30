@@ -1005,10 +1005,8 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendMsg(); }
   });
 
-  // Navigation par clic : KPI et chantiers mènent au détail
+  // Navigation par clic : KPI mènent au détail
   $$(".kpi").forEach(function(k){ k.style.cursor="pointer"; k.addEventListener("click", function(){ showPage(k.getAttribute("data-go")||"projets"); }); });
-  $$(".chrow").forEach(function(r){ r.addEventListener("click", function(){ showPage("chantiers"); }); });
-  $$(".ccard").forEach(function(c){ c.addEventListener("click", function(){ showPage("projets"); }); });
 
   // ===== PAGE TÂCHES (données Notion live via /api/agent) =====
   var TACHES_DATA = null, respFilter = "Tous", tachesLoaded = false, tachesView = "liste";
