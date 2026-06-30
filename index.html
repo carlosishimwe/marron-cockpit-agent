@@ -271,6 +271,23 @@ html[data-theme="dark"] .stat{background:rgba(236,226,208,.06);}
 html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
 .roadnote{font-size:12px;color:var(--muted);margin-top:14px;}
 
+/* roadmap : chevron + sous-lignes tâches */
+.gchev{flex:0 0 auto;width:20px;height:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);border:none;background:none;padding:0;border-radius:4px;transition:color .18s;}
+.gchev:hover{color:var(--brick);}
+.gchev svg{transition:transform .25s;}
+.grow.expanded .gchev svg{transform:rotate(90deg);}
+.gtask-row{display:grid;grid-template-columns:190px 1fr;border-bottom:1px solid var(--line);align-items:center;background:var(--card-2);}
+.gtask-row .lbl{padding:5px 14px 5px 32px;min-width:0;display:flex;align-items:center;gap:6px;}
+.gtask-row .lbl .tnm{font-size:11px;color:var(--ink-soft);white-space:normal;line-height:1.3;}
+.gtask-row .gtrack{position:relative;height:26px;}
+.gtask-diamond{position:absolute;top:50%;width:8px;height:8px;background:var(--brick);transform:translate(-50%,-50%) rotate(45deg);border:1px solid var(--card-2);border-radius:1px;}
+.gtask-list{padding:7px 14px 7px 32px;border-bottom:1px solid var(--line);background:var(--card-2);display:flex;flex-wrap:wrap;gap:6px 14px;}
+.gtask-item{font-size:10.5px;color:var(--ink-soft);display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.gtask-item .d{width:5px;height:5px;border-radius:50%;background:var(--brick);flex:0 0 auto;opacity:.7;}
+.gtask-item .dt{color:var(--muted);}
+.gtask-item .tr{font-weight:500;color:var(--ink-soft);}
+.gantt > :last-child{border-bottom:none;}
+
 /* chantiers page */
 .csection{margin-bottom:24px;}
 .csection .ch-h{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
@@ -461,17 +478,27 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
         <div class="gantt">
           <div class="gmonths"><div class="sp">Projet</div><div class="mm"><span>Jun</span><span>Jul</span><span>Aoû</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Déc</span></div></div>
           <div class="gsection" data-ent="REROOM">REROOM</div>
-          <div class="grow" data-ent="REROOM"><div class="lbl"><span class="badge" style="background:var(--reroom);width:24px;height:24px;border-radius:7px;font-size:10px">RR</span><span class="nm">Live Session</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:8%;width:30%;background:var(--reroom)">4 épisodes</div></div></div>
-          <div class="grow" data-ent="REROOM"><div class="lbl"><span class="badge" style="background:var(--reroom);width:24px;height:24px;border-radius:7px;font-size:10px">RR</span><span class="nm">Event septembre</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:36%;width:14%;background:var(--reroom)">Build</div></div></div>
-          <div class="grow" data-ent="REROOM"><div class="lbl"><span class="badge" style="background:var(--reroom);width:24px;height:24px;border-radius:7px;font-size:10px">RR</span><span class="nm">Events mensuels</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar run" style="left:1%;width:97%;background:var(--reroom)">RUN</div></div></div>
-          <div class="grow" data-ent="REROOM"><div class="lbl"><span class="badge" style="background:var(--reroom);width:24px;height:24px;border-radius:7px;font-size:10px">RR</span><span class="nm">JMB · relance</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:8%;width:34%;background:var(--reroom)">Négo</div></div></div>
-          <div class="grow" data-ent="REROOM"><div class="lbl"><span class="badge" style="background:var(--reroom);width:24px;height:24px;border-radius:7px;font-size:10px">RR</span><span class="nm">Brechó Rio</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:50%;width:22%;background:var(--reroom)">Build</div></div></div>
+          <div class="grow" data-ent="REROOM"><div class="lbl"><button class="gchev" onclick="toggleRProj(this)" aria-label="Déplier"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button><span class="badge" style="background:var(--reroom);width:24px;height:24px;border-radius:7px;font-size:10px">RR</span><span class="nm">Live Session</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:8%;width:30%;background:var(--reroom)">4 épisodes</div></div></div>
+          <div class="gtask-row" style="display:none"><div class="lbl"><span class="tnm">2 tâches</span></div><div class="gtrack"><div class="gtask-diamond" style="left:25%"></div><div class="gtask-diamond" style="left:38%"></div></div></div>
+          <div class="gtask-list" style="display:none"><span class="gtask-item"><span class="d"></span>Script épisode 3 <span class="dt">9 juil</span> <span class="tr">Mélissa</span></span><span class="gtask-item"><span class="d"></span>Montage final <span class="dt">1 août</span> <span class="tr">Thibô</span></span></div>
+          <div class="grow" data-ent="REROOM"><div class="lbl"><button class="gchev" onclick="toggleRProj(this)" aria-label="Déplier"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button><span class="badge" style="background:var(--reroom);width:24px;height:24px;border-radius:7px;font-size:10px">RR</span><span class="nm">Event septembre</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:36%;width:14%;background:var(--reroom)">Build</div></div></div>
+          <div class="gtask-row" style="display:none"><div class="lbl"><span class="tnm">3 tâches</span></div><div class="gtrack"><div class="gtask-diamond" style="left:40%"></div><div class="gtask-diamond" style="left:47%"></div><div class="gtask-diamond" style="left:50%"></div></div></div>
+          <div class="gtask-list" style="display:none"><span class="gtask-item"><span class="d"></span>Lieu signé <span class="dt">11 août</span> <span class="tr">Carlos</span></span><span class="gtask-item"><span class="d"></span>Visuels FW24 <span class="dt">1 sept</span> <span class="tr">Thibô</span></span><span class="gtask-item"><span class="d"></span>Run sheet <span class="dt">5 sept</span> <span class="tr">Mélissa</span></span></div>
+          <div class="grow" data-ent="REROOM"><div class="lbl"><button class="gchev" onclick="toggleRProj(this)" aria-label="Déplier"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button><span class="badge" style="background:var(--reroom);width:24px;height:24px;border-radius:7px;font-size:10px">RR</span><span class="nm">Events mensuels</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar run" style="left:1%;width:97%;background:var(--reroom)">RUN</div></div></div>
+          <div class="grow" data-ent="REROOM"><div class="lbl"><button class="gchev" onclick="toggleRProj(this)" aria-label="Déplier"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button><span class="badge" style="background:var(--reroom);width:24px;height:24px;border-radius:7px;font-size:10px">RR</span><span class="nm">JMB · relance</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:8%;width:34%;background:var(--reroom)">Négo</div></div></div>
+          <div class="gtask-row" style="display:none"><div class="lbl"><span class="tnm">1 tâche</span></div><div class="gtrack"><div class="gtask-diamond" style="left:42%"></div></div></div>
+          <div class="gtask-list" style="display:none"><span class="gtask-item"><span class="d"></span>Contrat lieu <span class="dt">12 août</span> <span class="tr">Sendo</span></span></div>
+          <div class="grow" data-ent="REROOM"><div class="lbl"><button class="gchev" onclick="toggleRProj(this)" aria-label="Déplier"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button><span class="badge" style="background:var(--reroom);width:24px;height:24px;border-radius:7px;font-size:10px">RR</span><span class="nm">Brechó Rio</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:50%;width:22%;background:var(--reroom)">Build</div></div></div>
           <div class="gsection" data-ent="MARRON">MARRON</div>
-          <div class="grow" data-ent="MARRON"><div class="lbl"><span class="badge" style="background:var(--marron);width:24px;height:24px;border-radius:7px;font-size:10px">MR</span><span class="nm">TEDx Pointe Noire</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:1%;width:49%;background:var(--marron)">Build</div><div class="gdiamond" style="left:50%"></div></div></div>
-          <div class="grow" data-ent="MARRON"><div class="lbl"><span class="badge" style="background:var(--marron);width:24px;height:24px;border-radius:7px;font-size:10px">MR</span><span class="nm">Notion + cadence</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:1%;width:13%;background:var(--marron)">Build</div></div></div>
+          <div class="grow" data-ent="MARRON"><div class="lbl"><button class="gchev" onclick="toggleRProj(this)" aria-label="Déplier"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button><span class="badge" style="background:var(--marron);width:24px;height:24px;border-radius:7px;font-size:10px">MR</span><span class="nm">TEDx Pointe Noire</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:1%;width:49%;background:var(--marron)">Build</div><div class="gdiamond" style="left:50%"></div></div></div>
+          <div class="gtask-row" style="display:none"><div class="lbl"><span class="tnm">4 tâches</span></div><div class="gtrack"><div class="gtask-diamond" style="left:4%"></div><div class="gtask-diamond" style="left:29%"></div><div class="gtask-diamond" style="left:40%"></div><div class="gtask-diamond" style="left:50%"></div></div></div>
+          <div class="gtask-list" style="display:none"><span class="gtask-item"><span class="d"></span>Budget setup <span class="dt">1 juil</span> <span class="tr">Carlos</span></span><span class="gtask-item"><span class="d"></span>Validation visuels <span class="dt">2 sept</span> <span class="tr">Thibô</span></span><span class="gtask-item"><span class="d"></span>Contrat lieu à signer <span class="dt">20 août</span> <span class="tr">Carlos</span></span><span class="gtask-item"><span class="d"></span>Brief intervenants <span class="dt">10 sept</span> <span class="tr">Hortense</span></span></div>
+          <div class="grow" data-ent="MARRON"><div class="lbl"><button class="gchev" onclick="toggleRProj(this)" aria-label="Déplier"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button><span class="badge" style="background:var(--marron);width:24px;height:24px;border-radius:7px;font-size:10px">MR</span><span class="nm">Notion + cadence</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:1%;width:13%;background:var(--marron)">Build</div></div></div>
           <div class="gsection" data-ent="Data Studio">Data Studio</div>
-          <div class="grow" data-ent="Data Studio"><div class="lbl"><span class="badge" style="background:var(--data);width:24px;height:24px;border-radius:7px;font-size:10px">DS</span><span class="nm">Pilote Cécile</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:1%;width:21%;background:var(--data)">Build</div></div></div>
-          <div class="grow" data-ent="Data Studio"><div class="lbl"><span class="badge" style="background:var(--data);width:24px;height:24px;border-radius:7px;font-size:10px">DS</span><span class="nm">Acquisition Baara</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:14%;width:20%;background:var(--data)">Prospect</div></div></div>
+          <div class="grow" data-ent="Data Studio"><div class="lbl"><button class="gchev" onclick="toggleRProj(this)" aria-label="Déplier"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button><span class="badge" style="background:var(--data);width:24px;height:24px;border-radius:7px;font-size:10px">DS</span><span class="nm">Pilote Cécile</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:1%;width:21%;background:var(--data)">Build</div></div></div>
+          <div class="gtask-row" style="display:none"><div class="lbl"><span class="tnm">2 tâches</span></div><div class="gtrack"><div class="gtask-diamond" style="left:10%"></div><div class="gtask-diamond" style="left:15%"></div></div></div>
+          <div class="gtask-list" style="display:none"><span class="gtask-item"><span class="d"></span>Démo dashboard <span class="dt">5 juil</span> <span class="tr">Carlos</span></span><span class="gtask-item"><span class="d"></span>Intégration données <span class="dt">12 juil</span> <span class="tr">Carlos</span></span></div>
+          <div class="grow" data-ent="Data Studio"><div class="lbl"><button class="gchev" onclick="toggleRProj(this)" aria-label="Déplier"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button><span class="badge" style="background:var(--data);width:24px;height:24px;border-radius:7px;font-size:10px">DS</span><span class="nm">Acquisition Baara</span></div><div class="gtrack"><div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="gtoday" style="left:7%"></div><div class="gbar" style="left:14%;width:20%;background:var(--data)">Prospect</div></div></div>
         </div>
         <div class="roadnote">Glisse horizontalement sur mobile. Barres pleines pour le BUILD, rayées pour le RUN, diamant pour le jalon TEDx.</div>
       </section>
@@ -1100,6 +1127,7 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
       any=true;
       html+='<div class="gsection" data-ent="'+esc(e)+'">'+esc(e)+'</div>';
       rows.forEach(function(p){
+        var projName=p.nom||"";
         var bar="", diamond="";
         if(p.type==="RUN"){
           bar='<div class="gbar run" style="left:1%;width:97%;background:'+entColor(e)+'">RUN</div>';
@@ -1113,7 +1141,26 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
         } else {
           bar='<div class="gbar" style="left:1%;width:6%;background:'+entColor(e)+';opacity:.45">?</div>';
         }
-        html+='<div class="grow" data-ent="'+esc(e)+'"><div class="lbl"><span class="badge" style="background:'+entColor(e)+';width:24px;height:24px;border-radius:7px;font-size:10px">'+entBadge(e)+'</span><span class="nm">'+esc(p.nom||"")+'</span></div><div class="gtrack">'+grid+'<div class="gtoday" style="left:'+todayPct.toFixed(0)+'%"></div>'+bar+diamond+'</div></div>';
+
+        /* ---- TÂCHES rattachées au projet ---- */
+        var tasks=(LIVE&&LIVE.taches)?LIVE.taches.filter(function(t){
+          if(!t.projet) return false;
+          return t.projet.split(/,\s*/).indexOf(projName)>=0;
+        }):[];
+        var tDiamonds="", tItems="";
+        tasks.forEach(function(td){
+          if(td.echeance){ var tp=pos(td.echeance); tDiamonds+='<div class="gtask-diamond" style="left:'+tp.toFixed(0)+'%"></div>'; }
+          tItems+='<span class="gtask-item"><span class="d"></span>'+esc(td.tache||"Sans titre")+(td.echeance?' <span class="dt">'+frDate(td.echeance)+'</span>':'')+(td.resp?' <span class="tr">'+esc(td.resp)+'</span>':'')+'</span>';
+        });
+        var hasT=tasks.length>0;
+        var prefix=hasT?'<button class="gchev" onclick="toggleRProj(this)" aria-label="Déplier"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></button>':'<span style="width:20px;flex:0 0 auto"></span>';
+
+        html+='<div class="grow" data-ent="'+esc(e)+'" data-projet="'+esc(projName)+'"><div class="lbl">'+prefix+'<span class="badge" style="background:'+entColor(e)+';width:24px;height:24px;border-radius:7px;font-size:10px">'+entBadge(e)+'</span><span class="nm">'+esc(projName)+'</span></div><div class="gtrack">'+grid+'<div class="gtoday" style="left:'+todayPct.toFixed(0)+'%"></div>'+bar+diamond+'</div></div>';
+
+        if(hasT){
+          html+='<div class="gtask-row" style="display:none"><div class="lbl"><span class="tnm">'+tasks.length+' tâche'+(tasks.length>1?'s':'')+'</span></div><div class="gtrack">'+tDiamonds+'</div></div>';
+          if(tItems) html+='<div class="gtask-list" style="display:none">'+tItems+'</div>';
+        }
       });
     });
     if(!any){ html+='<div class="tempty" style="padding:24px">Aucun projet pour ce filtre.</div>'; }
@@ -1179,6 +1226,18 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
   }
 
   document.documentElement.setAttribute("data-theme","light");
+
+  // toggle dépliage roadmap
+  window.toggleRProj = function(btn){
+    var row=btn.closest(".grow");
+    row.classList.toggle("expanded");
+    var next=row.nextElementSibling;
+    while(next && (next.classList.contains("gtask-row") || next.classList.contains("gtask-list"))){
+      next.style.display=(next.style.display==="none"?"":"none");
+      next=next.nextElementSibling;
+    }
+  };
+
   showPage("accueil"); applyFilter();
   loadAllData();
 })();
