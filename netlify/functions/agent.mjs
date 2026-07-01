@@ -124,28 +124,37 @@ function extractData(projects, tasks, chantiers) {
   return { projets, taches, chantiers: chantiersOut };
 }
 
-// --- construit un contexte texte compact pour le LLM ---
-function contextFromData({ projets, taches, chantiers }) {
+// --- construit un contexte texte compact pour le LLM (plafonné 12000 caracteres) ---
+const MAX_CONTEXT = 12000;
+function compactContext({ projets, taches }) {
   const today = new Date().toISOString().slice(0, 10);
+  const in14 = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
+  const late = (t) => t.echeance && t.echeance < today && (t.statut || "") !== "Fait";
+  const tasksOf = (nom) => taches.filter((t) => t.projet && t.projet.split(/,\s*/).includes(nom));
+
   const lines = [`Date du jour : ${today}.`, ``, `PROJETS (${projets.length}) :`];
-  projets.forEach((p) =>
+  projets.forEach((p) => {
+    const tk = tasksOf(p.nom);
+    const af = tk.filter((t) => (t.statut || "") === "À faire").length;
+    const rt = tk.filter(late).length;
     lines.push(
-      `- ${p.nom} | entité ${p.entite} | statut ${p.statut} | garant ${p.garant} | priorité ${p.priorite} | pôle ${p.pole} | chantier ${(p.chantier || []).join(", ") || "—"} | échéance ${p.echeance || "non définie"}${p.notes ? ` | note: ${p.notes}` : ""}`
-    )
-  );
-  lines.push(``, `TÂCHES (${taches.length}) :`);
-  taches.forEach((t) =>
-    lines.push(
-      `- ${t.tache} | projet ${t.projet || "—"} | statut ${t.statut} | responsable ${t.resp} | priorité ${t.priorite} | échéance ${t.echeance || "non définie"}`
-    )
-  );
-  if (chantiers && chantiers.length) {
-    lines.push(``, `CHANTIERS (${chantiers.length}) :`);
-    chantiers.forEach((c) =>
-      lines.push(`- ${c.nom} | entité ${c.entite} | pilote ${c.pilote || "—"} | projets ${(c.projets || []).join(", ") || "—"}`)
+      `- ${p.nom} | ${p.entite || "?"} | ${p.statut || "?"} | éch ${p.echeance || "—"} | garant ${p.garant || "—"} | ${af} à faire, ${rt} en retard`
     );
-  }
-  return lines.join("\n");
+  });
+
+  const lates = taches.filter(late).sort((a, b) => (a.echeance < b.echeance ? -1 : 1));
+  lines.push(``, `TÂCHES EN RETARD (${lates.length}) :`);
+  lates.forEach((t) => lines.push(`- ${t.tache} | ${t.projet || "—"} | ${t.resp || "—"} | éch ${t.echeance}`));
+
+  const soon = taches
+    .filter((t) => t.echeance && t.echeance >= today && t.echeance <= in14 && (t.statut || "") !== "Fait")
+    .sort((a, b) => (a.echeance < b.echeance ? -1 : 1));
+  lines.push(``, `TÂCHES 14 PROCHAINS JOURS (${soon.length}) :`);
+  soon.forEach((t) => lines.push(`- ${t.tache} | ${t.projet || "—"} | ${t.resp || "—"} | éch ${t.echeance}`));
+
+  let out = lines.join("\n");
+  if (out.length > MAX_CONTEXT) out = out.slice(0, MAX_CONTEXT) + "\n… (contexte tronqué)";
+  return out;
 }
 
 const SYSTEM = `Tu es l'assistant de pilotage interne de MARRON et REROOM. Tu parles a Carlos et a l'equipe.
@@ -191,30 +200,50 @@ export default async (req) => {
     if (!question) return json({ error: "question manquante" }, 400);
 
     const OPENROUTER = process.env.OPENROUTER_API_KEY;
-    if (!OPENROUTER) return json({ error: "OPENROUTER_API_KEY manquant cote serveur" }, 500);
+    if (!OPENROUTER) return json({ answer: "Config manquante: OPENROUTER_API_KEY dans Netlify." });
 
-    const context = contextFromData(data);
+    const context = compactContext(data);
     const messages = [
       { role: "system", content: `${SYSTEM}\n\n=== DONNEES ===\n${context}` },
       ...(Array.isArray(history) ? history.slice(-6) : []),
       { role: "user", content: question },
     ];
 
-    const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENROUTER}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://marron.earth",
-        "X-Title": "MARRON Cockpit",
-      },
-      body: JSON.stringify({ model: MODEL, messages, temperature: 0.3, max_tokens: 600 }),
-    });
-    if (!r.ok) return json({ error: `OpenRouter ${r.status}: ${await r.text()}` }, 502);
+    // Cascade de modèles : on tente le suivant sur 404/429/5xx, on s'arrete sur 4xx bloquant.
+    const models = [];
+    [MODEL, "meta-llama/llama-3.3-70b-instruct:free", "mistralai/mistral-small-3.1-24b-instruct:free", "google/gemini-2.0-flash-exp:free"]
+      .forEach((m) => { if (m && !models.includes(m)) models.push(m); });
 
-    const j = await r.json();
-    const answer = j.choices?.[0]?.message?.content?.trim() || "Pas de reponse.";
-    return json({ answer });
+    let lastStatus = 0, lastBody = "";
+    for (const model of models) {
+      try {
+        const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${OPENROUTER}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://marron.earth",
+            "X-Title": "MARRON Cockpit",
+          },
+          body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 600 }),
+        });
+        if (r.ok) {
+          const j = await r.json();
+          const answer = j.choices?.[0]?.message?.content?.trim() || "Pas de reponse.";
+          return json({ answer });
+        }
+        lastStatus = r.status;
+        lastBody = await r.text();
+        console.error("OpenRouter", model, r.status, String(lastBody).slice(0, 300));
+        // 404/429/5xx : modele indispo ou throttle -> on tente le suivant. Sinon on arrete.
+        if (r.status !== 404 && r.status !== 429 && r.status < 500) break;
+      } catch (e) {
+        lastStatus = 0;
+        lastBody = String((e && e.message) || e);
+        console.error("OpenRouter fetch", model, lastBody);
+      }
+    }
+    return json({ answer: "Erreur OpenRouter: " + lastStatus + " " + String(lastBody).slice(0, 200) });
   } catch (e) {
     return json({ error: String((e && e.message) || e) }, 500);
   }
