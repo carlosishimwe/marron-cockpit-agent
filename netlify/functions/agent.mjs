@@ -211,7 +211,7 @@ export default async (req) => {
 
     // Cascade de modèles : on tente le suivant sur 404/429/5xx, on s'arrete sur 4xx bloquant.
     const models = [];
-    [MODEL, "meta-llama/llama-3.3-70b-instruct:free", "mistralai/mistral-small-3.1-24b-instruct:free", "google/gemini-2.0-flash-exp:free"]
+    [MODEL, "meta-llama/llama-3.3-70b-instruct:free", "mistralai/mistral-small-3.1-24b-instruct:free", "google/gemini-flash-1.5:free"]
       .forEach((m) => { if (m && !models.includes(m)) models.push(m); });
 
     let lastStatus = 0, lastBody = "";
