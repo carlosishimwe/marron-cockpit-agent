@@ -1027,6 +1027,7 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     document.getElementById("fabIcClose").style.display = chatOpen ? "" : "none";
     if(chatOpen) setTimeout(function(){ document.getElementById("chatInput").focus(); }, 350);
   }
+  window.toggleChat = toggleChat; // exposé pour les onclick inline (fab, overlay, close)
 
   function addMsg(text, role){
     var msgs = document.getElementById("chatMsgs");
