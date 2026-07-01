@@ -62,6 +62,7 @@ function extractData(projects, tasks, chantiers) {
     const pr = pg.properties;
     const o = {
       id: pg.id,
+      url: pg.url || "",
       nom: txt(pr["Nom du projet"]),
       entite: sel(pr["Entité"]),
       statut: sel(pr["Statut"]),
@@ -83,6 +84,7 @@ function extractData(projects, tasks, chantiers) {
     const pr = cg.properties;
     const o = {
       id: cg.id,
+      url: cg.url || "",
       nom: txt(pr["Nom du chantier"]),
       entite: sel(pr["Entité"]),
       pilote: sel(pr["Pilote"]),
@@ -108,6 +110,7 @@ function extractData(projects, tasks, chantiers) {
     const projet = rel(pr["Projet"]).map((id) => nameById[id]).filter(Boolean).join(", ");
     return {
       id: tg.id,
+      url: tg.url || "",
       tache: txt(pr["Tâche"]),
       statut: sel(pr["Statut"]),
       priorite: sel(pr["Priorité"]),
