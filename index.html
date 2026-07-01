@@ -1047,6 +1047,19 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     inp.disabled = on;
   }
 
+  function addErr(text){
+    var msgs = document.getElementById("chatMsgs");
+    var d = document.createElement("div");
+    d.className = "msg bot err";
+    d.textContent = text;
+    d.style.background="var(--brick-tint)";
+    d.style.color="var(--brick-deep)";
+    d.style.border="1px solid var(--brick)";
+    msgs.appendChild(d);
+    msgs.scrollTop = msgs.scrollHeight;
+    return d;
+  }
+
   async function sendMsg(){
     var inp = document.getElementById("chatInput");
     var q = inp.value.trim();
@@ -1056,20 +1069,33 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     chatHistory.push({role:"user", content:q});
     setLoading(true);
     var typing = addMsg("…", "bot typing");
+    var ctrl = new AbortController();
+    var to = setTimeout(function(){ ctrl.abort(); }, 25000);
     try {
       var r = await fetch(AGENT_URL, {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({question:q, history: chatHistory.slice(-6)})
+        body: JSON.stringify({question:q, history: chatHistory.slice(-6)}),
+        signal: ctrl.signal
       });
-      var data = await r.json();
+      clearTimeout(to);
+      var raw = await r.text();
       typing.remove();
-      var answer = data.answer || data.error || "Pas de réponse.";
-      addMsg(answer, "bot");
-      chatHistory.push({role:"assistant", content:answer});
+      if(!r.ok){
+        addErr("Erreur "+r.status+" : "+(raw||"").slice(0,200));
+      } else {
+        var data={}; try{ data=JSON.parse(raw); }catch(e){}
+        var answer = data.answer || data.error || ((raw||"").slice(0,200)) || "Pas de réponse.";
+        addMsg(answer, "bot");
+        chatHistory.push({role:"assistant", content:answer});
+      }
     } catch(e) {
+      clearTimeout(to);
       typing.remove();
-      addMsg("Erreur de connexion à l'agent.", "bot");
+      var msg = (e && e.name==="AbortError")
+        ? "Délai dépassé (25s), l'agent n'a pas répondu. Réessaie."
+        : ("Connexion impossible : "+String((e&&e.message)||e).slice(0,200));
+      addErr(msg);
     }
     setLoading(false);
     document.getElementById("chatInput").focus();
