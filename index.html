@@ -344,6 +344,24 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
 .reveal{opacity:0;transform:translateY(10px);animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards;}
 @keyframes rise{to{opacity:1;transform:none;}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}.reveal{opacity:1;transform:none;}.page.on{animation:none;}}
+
+/* drawer liste + drill-down (additif) */
+.dlist{max-height:62vh;overflow-y:auto;margin:4px -4px 0;-webkit-overflow-scrolling:touch;}
+.dlrow{display:flex;align-items:center;gap:10px;min-height:44px;padding:9px 8px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .15s;}
+.dlrow:hover{background:var(--card-2);}
+.dlrow:active{opacity:.6;}
+.dlrow:last-child{border-bottom:none;}
+.dlmain{flex:1 1 auto;min-width:0;}
+.dltop{display:flex;align-items:center;gap:8px;}
+.dltop .ct{font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dlmeta{text-transform:none;letter-spacing:0;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dlist-ech{flex:0 0 auto;font-size:12px;white-space:nowrap;}
+.dlist-open{flex:0 0 auto;width:40px;height:40px;min-width:40px;border:1px solid var(--line-2);background:var(--card);border-radius:10px;color:var(--ink-soft);cursor:pointer;font-size:15px;line-height:1;transition:border-color .15s,color .15s,opacity .15s;}
+.dlist-open:hover{border-color:var(--muted);color:var(--ink);}
+.dlist-open:active{opacity:.6;}
+.dlist-open[disabled]{opacity:.3;cursor:default;}
+.clickable{cursor:pointer;transition:opacity .15s;}
+.clickable:active{opacity:.6;}
 </style>
 </head>
 <body>
@@ -856,6 +874,7 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
 
   function renderDrawer(e){
     var type=e._type||"projet";
+    if(type==="liste"){ renderListeContent(e); } else {
     $("#dTypeBadge").textContent=type==="projet"?"Projet":(type==="tache"?"Tâche":"Chantier");
     $("#dName").textContent=e.nom||e.tache||"—";
 
@@ -914,6 +933,7 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
         var ent=JSON.parse(d.getAttribute("data-entity")); pushDrawer(ent);
       };});
     } else { childDiv.style.display="none"; }
+    }
 
     /* bouton back si pile > 1 */
     var existingBack=drawer.querySelector(".dback");
@@ -925,6 +945,60 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
       back.onclick=popDrawer;
       drawer.querySelector(".dheader").after(back);
     }
+  }
+
+  /* ---- Drawer type "liste" : liste scrollable, chaque ligne ouvre Notion ou le détail ---- */
+  function _dotClass(s){ s=(s||"").toLowerCase();
+    return s.indexOf("fait")>=0?"fait":(s.indexOf("bloq")>=0?"bloque":(s.indexOf("cours")>=0?"encours":"afaire")); }
+  function _openBtn(x){
+    return '<button class="dlist-open" title="Ouvrir dans Notion" aria-label="Ouvrir dans Notion"'
+      +(x.url?'':' disabled')+'>↗</button>';
+  }
+  function _listeRow(x, i, today){
+    var isT=!!x.tache, isC=!isT && ((x.projets!==undefined)||(x.pilote!==undefined));
+    var head, meta;
+    if(isT){
+      head='<span class="dot '+_dotClass(x.statut)+'"></span><span class="ct">'+esc(x.tache||"Sans titre")+'</span>';
+      meta=esc(x.projet||"—")+(x.resp?" · "+esc(x.resp):"");
+    } else if(isC){
+      head='<span class="badge" style="background:'+entColor(x.entite)+'">'+entBadge(x.entite)+'</span><span class="ct">'+esc(x.nom||"Sans nom")+'</span>';
+      meta=(x.pilote?esc(x.pilote)+" · ":"")+((x.projets||[]).length)+" projet"+(((x.projets||[]).length)>1?"s":"");
+    } else {
+      head='<span class="badge" style="background:'+entColor(x.entite)+'">'+entBadge(x.entite)+'</span><span class="ct">'+esc(x.nom||"Sans nom")+'</span>';
+      meta=(x.statut?esc(x.statut):"—")+(x.garant?" · "+esc(x.garant):"");
+    }
+    var ech=x.echeance?('<span class="dlist-ech" style="color:'+(x.echeance<today?"var(--brick)":"var(--ink-soft)")+'">'+esc(frDate(x.echeance))+'</span>'):'';
+    return '<div class="dlrow" data-idx="'+i+'"><div class="dlmain">'
+      +'<div class="dltop">'+head+'</div>'
+      +'<div class="dlmeta mcap">'+meta+'</div></div>'
+      +ech+_openBtn(x)+'</div>';
+  }
+  function renderListeContent(e){
+    $("#dTypeBadge").textContent="Liste";
+    var items=(e.items||[]).slice();
+    if(!e.noSort){
+      items.sort(function(a,b){ var ae=a.echeance||"9999-12-31", be=b.echeance||"9999-12-31"; return ae<be?-1:(ae>be?1:0); });
+    }
+    $("#dName").textContent=(e.title||"Liste")+" · "+items.length;
+    $("#dNotes").textContent="";
+    var nb=$("#dNotionLink"); if(nb) nb.style.display="none";
+    var cd=$("#dChildren"); if(cd) cd.style.display="none";
+    var today=todayISO();
+    var rows=items.map(function(x,i){ return _listeRow(x,i,today); }).join("");
+    $("#dFields").innerHTML='<div class="dlist">'+(rows||'<div class="tempty" style="padding:18px">Rien ici.</div>')+'</div>';
+    var cont=$("#dFields");
+    cont.querySelectorAll(".dlrow").forEach(function(row){
+      var x=items[+row.getAttribute("data-idx")];
+      var ob=row.querySelector(".dlist-open");
+      if(ob) ob.onclick=function(ev){ ev.stopPropagation(); if(x.url) window.open(x.url,"_blank","noopener"); };
+      row.onclick=function(){
+        var dt=x.tache?"tache":((x.projets!==undefined||x.pilote!==undefined)?"chantier":"projet");
+        pushDrawer(Object.assign({},x,{_type:dt}));
+      };
+    });
+  }
+  function openListe(title, items, opts){
+    openDrawer(Object.assign({_type:"liste", title:title, items:items||[]}, opts||{}));
   }
 
   /* bind drawer close */
