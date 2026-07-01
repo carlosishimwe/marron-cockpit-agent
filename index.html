@@ -1079,8 +1079,25 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendMsg(); }
   });
 
-  // Navigation par clic : KPI mènent au détail
-  $$(".kpi").forEach(function(k){ k.style.cursor="pointer"; k.addEventListener("click", function(){ showPage(k.getAttribute("data-go")||"projets"); }); });
+  // Navigation par clic : KPI ouvrent le drawer liste (source unique = fonctions filtres)
+  function _kpiCard(id){ var v=document.getElementById(id); return v?v.closest(".kpi"):null; }
+  function bindKpi(id, fn){ var c=_kpiCard(id); if(!c) return; c.classList.add("clickable"); c.onclick=fn; }
+  bindKpi("kpiProjets", function(){ openListe("Projets actifs", getProjetsActifs()); });
+  bindKpi("kpiTaches", function(){
+    var list=getTachesAFaire().slice();
+    list.sort(function(a,b){ var pa=a.projet||"~", pb=b.projet||"~"; if(pa!==pb) return pa<pb?-1:1;
+      var ae=a.echeance||"9999", be=b.echeance||"9999"; return ae<be?-1:(ae>be?1:0); });
+    openListe("Tâches à faire", list, {noSort:true});
+  });
+  bindKpi("kpiRetard", function(){ openListe("Tâches en retard", getTachesEnRetard()); });
+  bindKpi("kpiLivres", function(){ openListe("Livrés ce mois", getProjetsLivresMois()); });
+  // Pill "À risque"
+  var riskPill=document.querySelector("#page-accueil .pill.risk");
+  if(riskPill){ riskPill.classList.add("clickable"); riskPill.onclick=function(){ openListe("Projets à risque", getProjetsARisque()); }; }
+  // Prochain jalon (projet mémorisé par renderJalon)
+  var jalonProj=null;
+  var jalonEl=document.querySelector("#page-accueil .jalon");
+  if(jalonEl){ jalonEl.classList.add("clickable"); jalonEl.onclick=function(){ if(jalonProj) openDrawer(Object.assign({},jalonProj,{_type:"projet"})); }; }
 
   // ===== PAGE TÂCHES (données Notion live via /api/agent) =====
   var TACHES_DATA = null, respFilter = "Tous", tachesLoaded = false, tachesView = "liste";
@@ -1245,6 +1262,7 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     });
     return {done:done,total:total};
   }
+  function projetsDuChantier(c){ return (LIVE.projets||[]).filter(function(p){ return (p.chantier||[]).indexOf(c.nom)>=0; }); }
 
   function renderKPIs(){
     var P=LIVE.projets.filter(function(p){ return inScope(p.entite); });
@@ -1275,13 +1293,14 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     ENT_ORDER.forEach(function(e){
       var c=counts[e]||0; if(!c) return;
       var len=total? C*c/total : 0;
-      segs+='<circle cx="54" cy="54" r="40" fill="none" stroke-width="9" stroke="'+entColor(e)+'" stroke-dasharray="'+len.toFixed(1)+' '+(C-len).toFixed(1)+'" stroke-dashoffset="'+(-off).toFixed(1)+'"></circle>';
+      segs+='<circle data-ent="'+esc(e)+'" style="cursor:pointer" cx="54" cy="54" r="40" fill="none" stroke-width="9" stroke="'+entColor(e)+'" stroke-dasharray="'+len.toFixed(1)+' '+(C-len).toFixed(1)+'" stroke-dashoffset="'+(-off).toFixed(1)+'"></circle>';
       off+=len;
-      leg+='<div class="r"><span class="dot" style="background:'+entColor(e)+'"></span>'+e+'<span class="ct">'+c+'</span></div>';
+      leg+='<div class="r clickable" data-ent="'+esc(e)+'"><span class="dot" style="background:'+entColor(e)+'"></span>'+e+'<span class="ct">'+c+'</span></div>';
     });
     var wrap=document.querySelector("#page-accueil .entwrap");
     if(!wrap) return;
     wrap.innerHTML='<div class="donut"><svg width="108" height="108" viewBox="0 0 108 108"><circle class="trackc" cx="54" cy="54" r="40" fill="none" stroke-width="9"></circle>'+segs+'</svg><div class="ctr"><b>'+total+'</b><span>Projets</span></div></div><div class="leg">'+(leg||'<div class="r" style="color:var(--muted)">Aucun projet</div>')+'</div>';
+    wrap.querySelectorAll("[data-ent]").forEach(function(el){ el.onclick=function(){ ent=el.getAttribute("data-ent"); applyFilter(); }; });
   }
 
   function chrowHTML(c){
@@ -1293,10 +1312,10 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     var list=LIVE.chantiers.filter(function(c){ return inScope(c.entite); });
     if(!list.length){ host.innerHTML='<div class="tempty" style="padding:20px">Aucun chantier pour ce filtre.</div>'; return; }
     host.innerHTML=list.slice(0,8).map(chrowHTML).join("");
-    host.querySelectorAll(".chrow").forEach(function(r){ r.onclick=function(){
+    host.querySelectorAll(".chrow").forEach(function(r){ r.classList.add("clickable"); r.onclick=function(){
       var cn=r.getAttribute("data-chantier");
       var c=(LIVE.chantiers||[]).filter(function(x){ return x.nom===cn; })[0];
-      if(c) openDrawer(Object.assign({},c,{_type:"chantier"}));
+      if(c) openListe(c.nom, projetsDuChantier(c));
     }; });
   }
 
@@ -1330,8 +1349,9 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     var fut=LIVE.projets.filter(function(p){ return inScope(p.entite) && projActive(p) && p.echeance && p.echeance>=today; });
     fut.sort(function(a,b){ return a.echeance<b.echeance?-1:1; });
     var mid=host.querySelector(".mid"), cd=host.querySelector(".cd");
-    if(!fut.length){ if(mid){ mid.querySelector(".t").textContent="Aucune échéance à venir"; mid.querySelector(".s").textContent=""; } if(cd) cd.innerHTML="<b>—</b><span>Restants</span>"; return; }
+    if(!fut.length){ jalonProj=null; if(mid){ mid.querySelector(".t").textContent="Aucune échéance à venir"; mid.querySelector(".s").textContent=""; } if(cd) cd.innerHTML="<b>—</b><span>Restants</span>"; return; }
     var p=fut[0];
+    jalonProj=p;
     var d=Math.round((new Date(p.echeance)-new Date(today))/86400000);
     if(mid){ mid.querySelector(".t").textContent=p.nom; mid.querySelector(".s").textContent=(p.entite||"")+" · "+frDate(p.echeance)+" "+String(p.echeance).slice(0,4); }
     if(cd){ cd.innerHTML="<b>J-"+d+"</b><span>Restants</span>"; }
@@ -1349,6 +1369,13 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     });
     return out;
   }
+  function personneItems(name){
+    var projs=(LIVE.projets||[]).filter(function(p){ return inScope(p.entite) && p.garant===name; });
+    var m=projEntityMap();
+    var tks=(LIVE.taches||[]).filter(function(t){ return _taskInScope(t,m) && t.resp===name && (t.statut||"")==="À faire"; });
+    tks.sort(function(a,b){ var ae=a.echeance||"9999", be=b.echeance||"9999"; return ae<be?-1:(ae>be?1:0); });
+    return projs.concat(tks);
+  }
   function renderEquipeHome(){
     var host=document.querySelector("#page-accueil .tlist"); if(!host) return;
     var st=teamStats(); var max=1; TEAM.forEach(function(n){ if(st[n].afaire>max) max=st[n].afaire; });
@@ -1357,8 +1384,9 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     host.innerHTML=rows.map(function(n){
       var s=st[n], pct=Math.round(s.afaire/max*100), over=s.retard>0?" over":"";
       var pic=avatarFor(n)?'<div class="pic" style="background-image:url(\''+avatarFor(n)+'\')"></div>':'<div class="minimono" style="width:34px;height:34px">'+esc(n.slice(0,1))+'</div>';
-      return '<div class="mem'+over+'">'+pic+'<div class="col"><div class="nmrow"><span class="nm">'+esc(n)+'</span><span class="pc">'+s.afaire+' à faire</span></div><div class="track"><i style="width:'+pct+'%"></i></div></div></div>';
+      return '<div class="mem'+over+' clickable" data-name="'+esc(n)+'">'+pic+'<div class="col"><div class="nmrow"><span class="nm">'+esc(n)+'</span><span class="pc">'+s.afaire+' à faire</span></div><div class="track"><i style="width:'+pct+'%"></i></div></div></div>';
     }).join("");
+    host.querySelectorAll(".mem[data-name]").forEach(function(el){ el.onclick=function(){ var nm=el.getAttribute("data-name"); openListe(nm, personneItems(nm), {noSort:true}); }; });
   }
   function renderEquipePage(){
     var host=document.querySelector("#page-equipe .cgrid"); if(!host) return;
@@ -1370,8 +1398,9 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
       var pic=avatarFor(n)?'<div class="pic" style="background-image:url(\''+avatarFor(n)+'\')"></div>':'<div class="minimono" style="width:36px;height:36px;font-size:15px">'+esc(n.slice(0,1))+'</div>';
       var col=avatarFor(n)?'<div class="col">':'<div class="col" style="margin-left:12px">';
       var ret=s.retard>0?'<span class="mcap" style="color:var(--brick)">'+s.retard+' en retard</span>':'<span class="mcap">0 en retard</span>';
-      return '<div class="card"><div class="mem'+over+'" style="margin-bottom:14px">'+pic+col+'<div class="nmrow"><span class="nm" style="font-size:16px">'+esc(n)+'</span><span class="pc">'+s.afaire+' à faire</span></div><div class="mcap" style="margin-top:3px">'+esc(ROLES[n]||"Équipe")+'</div></div></div><div class="track" style="margin-bottom:14px"><i style="width:'+pct+'%;background:var(--brick)"></i></div><div style="display:flex;gap:18px"><span class="mcap">'+s.projets+' projet'+(s.projets>1?"s":"")+'</span><span class="mcap">'+s.afaire+' à faire</span>'+ret+'</div></div>';
+      return '<div class="card clickable" data-name="'+esc(n)+'"><div class="mem'+over+'" style="margin-bottom:14px">'+pic+col+'<div class="nmrow"><span class="nm" style="font-size:16px">'+esc(n)+'</span><span class="pc">'+s.afaire+' à faire</span></div><div class="mcap" style="margin-top:3px">'+esc(ROLES[n]||"Équipe")+'</div></div></div><div class="track" style="margin-bottom:14px"><i style="width:'+pct+'%;background:var(--brick)"></i></div><div style="display:flex;gap:18px"><span class="mcap">'+s.projets+' projet'+(s.projets>1?"s":"")+'</span><span class="mcap">'+s.afaire+' à faire</span>'+ret+'</div></div>';
     }).join("");
+    host.querySelectorAll(".card[data-name]").forEach(function(el){ el.onclick=function(){ var nm=el.getAttribute("data-name"); openListe(nm, personneItems(nm), {noSort:true}); }; });
   }
 
   function renderProjets(){
@@ -1395,7 +1424,7 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
         +'<td class="ech">'+esc(ed)+'</td>'
         +'<td><span class="prio '+prioClass(p.priorite)+'">'+esc(p.priorite||"—")+'</span></td></tr>';
     }).join("");
-    body.querySelectorAll("tr[data-projet]").forEach(function(tr){ tr.onclick=function(){
+    body.querySelectorAll("tr[data-projet]").forEach(function(tr){ tr.classList.add("clickable"); tr.onclick=function(){
       var p=LIVE.projets.filter(function(x){ return x.nom===tr.getAttribute("data-projet"); })[0];
       if(p) openDrawer(Object.assign({},p,{_type:"projet"}));
     }; });
@@ -1458,7 +1487,7 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     host.querySelectorAll(".grow").forEach(function(row){
       var pn=row.getAttribute("data-projet");
       if(!pn) return;
-      row.style.cursor="pointer";
+      row.classList.add("clickable");
       row.addEventListener("click",function(e){
         if(e.target.closest(".gchev")) return;
         var p=(LIVE.projets||[]).filter(function(x){ return x.nom===pn; })[0];
@@ -1483,10 +1512,10 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     });
     if(!any){ html+='<div class="tempty" style="padding:24px">Aucun chantier pour ce filtre.</div>'; }
     page.innerHTML=html;
-    page.querySelectorAll(".ccard").forEach(function(cd){ cd.onclick=function(){
+    page.querySelectorAll(".ccard").forEach(function(cd){ cd.classList.add("clickable"); cd.onclick=function(){
       var cn=cd.getAttribute("data-chantier");
       var c=(LIVE.chantiers||[]).filter(function(x){ return x.nom===cn; })[0];
-      if(c) openDrawer(Object.assign({},c,{_type:"chantier"}));
+      if(c) openListe(c.nom, projetsDuChantier(c));
     }; });
   }
 
