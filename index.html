@@ -1174,14 +1174,12 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
 
   function renderKPIs(){
     var P=LIVE.projets.filter(function(p){ return inScope(p.entite); });
-    var m=projEntityMap();
-    var T=LIVE.taches.filter(function(t){ return ent==="Tous" || taskEntity(t,m)===ent; });
-    var actifs=P.filter(projActive).length;
-    var afaire=T.filter(function(t){ return (t.statut||"")==="À faire"; }).length;
-    var retard=T.filter(isLate).length;
-    var livres=P.filter(function(p){ return p.statut==="Livré"; }).length;
+    var actifs=getProjetsActifs().length;
+    var afaire=getTachesAFaire().length;
+    var retard=getTachesEnRetard().length;
+    var livres=getProjetsLivresMois().length;
     var chs=LIVE.chantiers.filter(function(c){ return inScope(c.entite); }).length;
-    var risque=P.filter(function(p){ return projActive(p) && p.echeance && p.echeance<todayISO(); }).length;
+    var risque=getProjetsARisque().length;
     animCount(document.getElementById("kpiProjets"), actifs);
     animCount(document.getElementById("kpiTaches"),  afaire);
     animCount(document.getElementById("kpiRetard"),  retard);
@@ -1437,6 +1435,38 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     svg.innerHTML='<defs><linearGradient id="chgGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" class="cg0"/><stop offset="100%" class="cg1"/></linearGradient></defs>'
       +'<line class="chart-grid" x1="8" y1="30" x2="352" y2="30"/><line class="chart-grid" x1="8" y1="65" x2="352" y2="65"/><line class="chart-grid" x1="8" y1="100" x2="352" y2="100"/>'
       +'<path class="chart-fill" d="'+fill.trim()+'"/><path class="chart-line" d="'+line.trim()+'"/>'+pts;
+  }
+
+  // ===== FONCTIONS FILTRES PARTAGÉES (source unique de calcul) =====
+  // Respectent le filtre entité actif (ent) via inScope / taskEntity.
+  function _taskInScope(t,m){ return ent==="Tous" || taskEntity(t,m)===ent; }
+  function getTachesAFaire(){
+    if(!LIVE) return [];
+    var m=projEntityMap();
+    return LIVE.taches.filter(function(t){ return _taskInScope(t,m) && (t.statut||"")==="À faire"; });
+  }
+  function getTachesEnRetard(){
+    if(!LIVE) return [];
+    var m=projEntityMap();
+    return LIVE.taches.filter(function(t){ return _taskInScope(t,m) && isLate(t); });
+  }
+  function getProjetsActifs(){
+    if(!LIVE) return [];
+    return LIVE.projets.filter(function(p){ return inScope(p.entite) && projActive(p); });
+  }
+  function getProjetsARisque(){
+    if(!LIVE) return [];
+    var today=todayISO();
+    return LIVE.projets.filter(function(p){
+      return inScope(p.entite) && p.echeance && p.echeance<today && ["Livré","En pause"].indexOf(p.statut)<0;
+    });
+  }
+  function getProjetsLivresMois(){
+    if(!LIVE) return [];
+    var mo=todayISO().slice(0,7);
+    return LIVE.projets.filter(function(p){
+      return inScope(p.entite) && p.statut==="Livré" && String(p.echeance||"").slice(0,7)===mo;
+    });
   }
 
   function renderAll(){
