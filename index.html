@@ -1061,6 +1061,31 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     return d;
   }
 
+  // Résumé compact construit depuis LIVE (déjà chargé) pour éviter que le backend relise Notion.
+  function buildChatContext(){
+    if(!LIVE) return "";
+    var today=todayISO();
+    var in14=new Date(Date.now()+14*86400000).toISOString().slice(0,10);
+    var taches=LIVE.taches||[], projets=LIVE.projets||[];
+    function tasksOf(nom){ return taches.filter(function(t){ return t.projet && t.projet.split(/,\s*/).indexOf(nom)>=0; }); }
+    var lines=["Date du jour : "+today+".","","PROJETS ("+projets.length+") :"];
+    projets.forEach(function(p){
+      var tk=tasksOf(p.nom);
+      var af=tk.filter(function(t){ return (t.statut||"")==="À faire"; }).length;
+      var rt=tk.filter(isLate).length;
+      lines.push("- "+p.nom+" | "+(p.entite||"?")+" | "+(p.statut||"?")+" | éch "+(p.echeance||"—")+" | garant "+(p.garant||"—")+" | "+af+" à faire, "+rt+" en retard");
+    });
+    var lates=taches.filter(isLate).sort(function(a,b){ return a.echeance<b.echeance?-1:1; });
+    lines.push("","TÂCHES EN RETARD ("+lates.length+") :");
+    lates.forEach(function(t){ lines.push("- "+t.tache+" | "+(t.projet||"—")+" | "+(t.resp||"—")+" | éch "+t.echeance); });
+    var soon=taches.filter(function(t){ return t.echeance && t.echeance>=today && t.echeance<=in14 && (t.statut||"")!=="Fait"; }).sort(function(a,b){ return a.echeance<b.echeance?-1:1; });
+    lines.push("","TÂCHES 14 PROCHAINS JOURS ("+soon.length+") :");
+    soon.forEach(function(t){ lines.push("- "+t.tache+" | "+(t.projet||"—")+" | "+(t.resp||"—")+" | éch "+t.echeance); });
+    var out=lines.join("\n");
+    if(out.length>12000) out=out.slice(0,12000)+"\n… (contexte tronqué)";
+    return out;
+  }
+
   async function sendMsg(){
     var inp = document.getElementById("chatInput");
     var q = inp.value.trim();
@@ -1071,12 +1096,12 @@ html[data-theme="dark"] .gsection{background:rgba(236,226,208,.03);}
     setLoading(true);
     var typing = addMsg("…", "bot typing");
     var ctrl = new AbortController();
-    var to = setTimeout(function(){ ctrl.abort(); }, 25000);
+    var to = setTimeout(function(){ ctrl.abort(); }, 30000);
     try {
       var r = await fetch(AGENT_URL, {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({question:q, history: chatHistory.slice(-6)}),
+        body: JSON.stringify({question:q, context: buildChatContext(), history: chatHistory.slice(-6)}),
         signal: ctrl.signal
       });
       clearTimeout(to);

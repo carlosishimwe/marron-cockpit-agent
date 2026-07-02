@@ -172,6 +172,54 @@ function json(obj, status = 200) {
   });
 }
 
+// --- appel LLM avec cascade de modèles, contexte déjà prêt ---
+async function runChat(context, question, history) {
+  const OPENROUTER = process.env.OPENROUTER_API_KEY;
+  if (!OPENROUTER) return json({ answer: "Config manquante: OPENROUTER_API_KEY dans Netlify." });
+
+  const messages = [
+    { role: "system", content: `${SYSTEM}\n\n=== DONNEES ===\n${context}` },
+    ...(Array.isArray(history) ? history.slice(-6) : []),
+    { role: "user", content: question },
+  ];
+
+  // Cascade de modèles : on tente le suivant sur 404/429/5xx, on s'arrete sur 4xx bloquant.
+  const models = [];
+  [MODEL, "meta-llama/llama-3.3-70b-instruct:free", "mistralai/mistral-small-3.1-24b-instruct:free", "google/gemini-flash-1.5:free"]
+    .forEach((m) => { if (m && !models.includes(m)) models.push(m); });
+
+  let lastStatus = 0, lastBody = "";
+  for (const model of models) {
+    try {
+      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${OPENROUTER}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://marron.earth",
+          "X-Title": "MARRON Cockpit",
+        },
+        body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 600 }),
+      });
+      if (r.ok) {
+        const j = await r.json();
+        const answer = j.choices?.[0]?.message?.content?.trim() || "Pas de reponse.";
+        return json({ answer });
+      }
+      lastStatus = r.status;
+      lastBody = await r.text();
+      console.error("OpenRouter", model, r.status, String(lastBody).slice(0, 300));
+      // 404/429/5xx : modele indispo ou throttle -> on tente le suivant. Sinon on arrete.
+      if (r.status !== 404 && r.status !== 429 && r.status < 500) break;
+    } catch (e) {
+      lastStatus = 0;
+      lastBody = String((e && e.message) || e);
+      console.error("OpenRouter fetch", model, lastBody);
+    }
+  }
+  return json({ answer: "Erreur OpenRouter: " + lastStatus + " " + String(lastBody).slice(0, 200) });
+}
+
 export default async (req) => {
   if (req.method === "OPTIONS") return new Response("", { status: 204, headers: CORS });
   if (req.method !== "POST") return json({ error: "POST uniquement" }, 405);
@@ -180,11 +228,18 @@ export default async (req) => {
     const body = await req.json().catch(() => ({}));
     const mode = body.mode || "chat";
 
+    // Chemin rapide : chat avec contexte fourni par le front -> on saute entièrement Notion.
+    if (mode === "chat" && typeof body.context === "string" && body.context.trim()) {
+      const { question, history } = body;
+      if (!question) return json({ error: "question manquante" }, 400);
+      return await runChat(body.context, question, history);
+    }
+
     const NOTION = process.env.NOTION_TOKEN;
     if (!NOTION) return json({ error: "NOTION_TOKEN manquant cote serveur" }, 500);
 
-    // 1. lire Notion (toujours). Chantiers en mode tolerant : si la base n'est pas
-    // encore partagee avec la connexion, on renvoie [] au lieu de tout casser.
+    // Lire Notion. Chantiers en mode tolerant : si la base n'est pas encore partagee
+    // avec la connexion, on renvoie [] au lieu de tout casser.
     const [projects, tasks, chantiers] = await Promise.all([
       notionQuery(PROJETS_DB, NOTION),
       notionQuery(TACHES_DB, NOTION),
@@ -192,58 +247,13 @@ export default async (req) => {
     ]);
     const data = extractData(projects, tasks, chantiers);
 
-    // 2a. mode lecture brute : l'app remplit toutes ses pages avec ca
+    // mode lecture brute : l'app remplit toutes ses pages avec ca
     if (mode === "data") return json(data);
 
-    // 2b. mode chat : on demande au LLM
+    // mode chat en fallback : pas de contexte fourni, on le construit depuis Notion
     const { question, history } = body;
     if (!question) return json({ error: "question manquante" }, 400);
-
-    const OPENROUTER = process.env.OPENROUTER_API_KEY;
-    if (!OPENROUTER) return json({ answer: "Config manquante: OPENROUTER_API_KEY dans Netlify." });
-
-    const context = compactContext(data);
-    const messages = [
-      { role: "system", content: `${SYSTEM}\n\n=== DONNEES ===\n${context}` },
-      ...(Array.isArray(history) ? history.slice(-6) : []),
-      { role: "user", content: question },
-    ];
-
-    // Cascade de modèles : on tente le suivant sur 404/429/5xx, on s'arrete sur 4xx bloquant.
-    const models = [];
-    [MODEL, "meta-llama/llama-3.3-70b-instruct:free", "mistralai/mistral-small-3.1-24b-instruct:free", "google/gemini-flash-1.5:free"]
-      .forEach((m) => { if (m && !models.includes(m)) models.push(m); });
-
-    let lastStatus = 0, lastBody = "";
-    for (const model of models) {
-      try {
-        const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${OPENROUTER}`,
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://marron.earth",
-            "X-Title": "MARRON Cockpit",
-          },
-          body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 600 }),
-        });
-        if (r.ok) {
-          const j = await r.json();
-          const answer = j.choices?.[0]?.message?.content?.trim() || "Pas de reponse.";
-          return json({ answer });
-        }
-        lastStatus = r.status;
-        lastBody = await r.text();
-        console.error("OpenRouter", model, r.status, String(lastBody).slice(0, 300));
-        // 404/429/5xx : modele indispo ou throttle -> on tente le suivant. Sinon on arrete.
-        if (r.status !== 404 && r.status !== 429 && r.status < 500) break;
-      } catch (e) {
-        lastStatus = 0;
-        lastBody = String((e && e.message) || e);
-        console.error("OpenRouter fetch", model, lastBody);
-      }
-    }
-    return json({ answer: "Erreur OpenRouter: " + lastStatus + " " + String(lastBody).slice(0, 200) });
+    return await runChat(compactContext(data), question, history);
   } catch (e) {
     return json({ error: String((e && e.message) || e) }, 500);
   }
