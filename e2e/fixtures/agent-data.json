@@ -1,0 +1,43 @@
+{
+  "projets": [
+    {
+      "id": "p1",
+      "url": "",
+      "nom": "TEDx Pointe Noire",
+      "entite": "MARRON",
+      "statut": "En cours",
+      "type": "BUILD",
+      "garant": "Carlos",
+      "priorite": "Haute",
+      "pole": "",
+      "echeance": "2026-09-26",
+      "echeanceEnd": "",
+      "chantier": ["Congo"],
+      "notes": ""
+    }
+  ],
+  "taches": [
+    {
+      "id": "t1",
+      "url": "",
+      "tache": "Budget setup événement",
+      "statut": "À faire",
+      "priorite": "Haute",
+      "resp": "Carlos",
+      "echeance": "2026-07-01",
+      "categorie": "",
+      "projet": "TEDx Pointe Noire"
+    }
+  ],
+  "chantiers": [
+    {
+      "id": "c1",
+      "url": "",
+      "nom": "Congo",
+      "entite": "MARRON",
+      "pilote": "Hortense",
+      "description": "",
+      "projets": ["TEDx Pointe Noire"]
+    }
+  ]
+}
