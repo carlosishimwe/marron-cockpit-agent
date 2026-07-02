@@ -1,0 +1,14 @@
+{
+  "name": "marron-cockpit-agent",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/verify-build.mjs",
+    "start": "serve . -l 8888",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.0",
+    "serve": "^14.2.4"
+  }
+}

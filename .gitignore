@@ -6,6 +6,11 @@
 # Dependances
 node_modules/
 
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
 # Divers
 .DS_Store
 .netlify/
